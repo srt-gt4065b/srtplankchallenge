@@ -125,7 +125,7 @@
         // ============================================================
         // [설정] 2. 앱 설정 변수
         // ============================================================
-        const CORRECT_SECRET_ANSWER = "홍길동"; // 정답: 실제 회장님 이름으로 변경하세요.
+        const CORRECT_SECRET_ANSWER = "서인수"; // 정답: 실제 회장님 이름으로 변경하세요.
         const TARGET_MONTH = 11; // 0~11 (11은 12월)
         let currentUser = null;
 
@@ -152,7 +152,7 @@
         // [로직] 시크릿 질문 확인
         // ============================================================
         function checkSecret() {
-            const correctAnswer = "서인수";
+            const CORRECT_SECRET_ANSWER = "서인수";
             const input = document.getElementById('secret-answer').value.trim();
             if (input === correctAnswer) {
                 showSection('register-page');
