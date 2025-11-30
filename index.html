@@ -152,8 +152,9 @@
         // [로직] 시크릿 질문 확인
         // ============================================================
         function checkSecret() {
+            const correctAnswer = "서인수";
             const input = document.getElementById('secret-answer').value.trim();
-            if (input === CORRECT_SECRET_ANSWER) {
+            if (input === correctAnswer) {
                 showSection('register-page');
             } else {
                 document.getElementById('secret-error').classList.remove('hidden');
