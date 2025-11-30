@@ -154,7 +154,7 @@
         function checkSecret() {
             const CORRECT_SECRET_ANSWER = "서인수";
             const input = document.getElementById('secret-answer').value.trim();
-            if (input === correctAnswer) {
+            if (input === CORRECT_SECRET_ANSWER) {
                 showSection('register-page');
             } else {
                 document.getElementById('secret-error').classList.remove('hidden');
