@@ -92,19 +92,19 @@ function markYesterdayMissed(){
             const btn = document.getElementById("p-" + id);
             if (!btn) return;
 
-            // 오늘 인증한 사람은 무조건 보라색(on) 유지
+            // 1) 오늘 인증한 사람은 절대 핑크 적용 금지 (보라색 그대로)
             if (btn.classList.contains("on")) {
                 btn.classList.remove("pink-miss");
                 return;
             }
 
-            // 어제 인증한 사람은 핑크 표시 안함
+            // 2) 어제 인증한 사람도 핑크 적용 안함
             if (checkedYesterday.has(String(id))) {
                 btn.classList.remove("pink-miss");
                 return;
             }
 
-            // 둘 다 아니면 → 핑크 표시
+            // 3) 어제도 미인증 + 오늘도 미인증 → 핑크 적용
             btn.classList.add("pink-miss");
         });
     });
