@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRT Challenge Check-in</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+
+<body>
+
+<div class="logo-box">
+    <img src="srt-logo.png" class="logo-img">
+</div>
+
+<div class="notice-box">
+    <p>♧ 1회 누락시 5천원 벌금있습니다.<br>
+    (카카오뱅크 3333-04-8860681 김미영)</p>
+
+    <p>♧ 미션 수행은 당일 완료. 다음날까지 댓글달면 인정.</p>
+
+    <p>♧ 12월 Default<br>
+       - 플랭크 기본 2분00초<br>
+       - 트위스트 25회 + 사이드킥 25회
+    </p>
+</div>
+
+<h2 id="today"></h2>
+<h3>오늘 인증 현황</h3>
+<div id="participant-panel" class="panel"></div>
+
+<div class="form">
+    <input id="userId" type="number" placeholder="고유번호(예: 1)">
+    <input id="name" type="text" placeholder="이름">
+    <textarea id="msg" placeholder="인증 메시지"></textarea>
+    <button onclick="submitCheckin()">출석하기</button>
+</div>
+
+<div id="checkin-list"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
