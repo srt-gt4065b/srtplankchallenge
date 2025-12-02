@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRT Challenge Admin</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="firebase-config.js"></script>
+
+<style>
+body { font-family:sans-serif; margin:20px; }
+.box { padding:15px; background:#f3f3f3; border-radius:10px; margin-bottom:20px; }
+.btn { padding:10px 16px; background:#7B61FF; color:white; border:none; border-radius:8px; cursor:pointer; }
+table { width:100%; border-collapse:collapse; margin-top:10px;}
+th,td { padding:10px; border-bottom:1px solid #ccc;}
+</style>
+</head>
+
+<body>
+
+<h1>SRT Plank Challenge – ADMIN</h1>
+
+<div class="box">
+    <h3>⚙ 참가자 상태 관리</h3>
+    <select id="pSelect"></select>
+    <select id="statusSelect">
+        <option value="normal">정상</option>
+        <option value="rest">휴식</option>
+    </select>
+    <button class="btn" onclick="updateStatus()">상태 변경</button>
+    <div id="statusMsg"></div>
+</div>
+
+<script>
+let participants = {};
+
+db.ref("participants").once("value", snap => {
+    participants = snap.val();
+    const sel = document.getElementById("pSelect");
+    Object.keys(participants).forEach(id => {
+        sel.innerHTML += `<option value="${id}">${id} - ${participants[id].name}</option>`;
+    });
+});
+
+function updateStatus(){
+    const id = document.getElementById("pSelect").value;
+    const status = document.getElementById("statusSelect").value;
+
+    db.ref("participants/"+id).update({ status });
+
+    document.getElementById("statusMsg").innerHTML =
+        `<p><b>${id}번 상태가 '${status}' 로 변경되었습니다.</b></p>`;
+}
+</script>
+
+</body>
+</html>
