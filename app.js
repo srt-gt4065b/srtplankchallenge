@@ -82,18 +82,30 @@ function getYesterdayKey(){
 }
 
 function markYesterdayMissed(){
-    const yesterday=getYesterdayKey();
+    const yesterday = getYesterdayKey();
 
-    db.ref("checkins/"+yesterday).once("value",snap=>{
-        let checked=new Set();
-        snap.forEach(child=> checked.add(String(child.val().userId)));
+    db.ref("checkins/" + yesterday).once("value", snap => {
+        let checkedYesterday = new Set();
+        snap.forEach(child => checkedYesterday.add(String(child.val().userId)));
 
-        Object.keys(participants).forEach(id=>{
-            const btn=document.getElementById("p-"+id);
-            if(!btn) return;
-            if(!checked.has(String(id))){
-                btn.classList.add("pink-miss");
+        Object.keys(participants).forEach(id => {
+            const btn = document.getElementById("p-" + id);
+            if (!btn) return;
+
+            // 오늘 인증한 사람은 무조건 보라색(on) 유지
+            if (btn.classList.contains("on")) {
+                btn.classList.remove("pink-miss");
+                return;
             }
+
+            // 어제 인증한 사람은 핑크 표시 안함
+            if (checkedYesterday.has(String(id))) {
+                btn.classList.remove("pink-miss");
+                return;
+            }
+
+            // 둘 다 아니면 → 핑크 표시
+            btn.classList.add("pink-miss");
         });
     });
 }
