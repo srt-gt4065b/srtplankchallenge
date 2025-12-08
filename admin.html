@@ -4,56 +4,466 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SRT Challenge Admin</title>
-
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="firebase-config.js"></script>
-
 <style>
-body { font-family:sans-serif; margin:20px; }
-.box { padding:15px; background:#f3f3f3; border-radius:10px; margin-bottom:20px; }
-.btn { padding:10px 16px; background:#7B61FF; color:white; border:none; border-radius:8px; cursor:pointer; }
-table { width:100%; border-collapse:collapse; margin-top:10px;}
-th,td { padding:10px; border-bottom:1px solid #ccc;}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 헤더 */
+.header {
+    text-align: center;
+    color: white;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.header p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* 카드 스타일 */
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-title .icon {
+    font-size: 20px;
+}
+
+/* 상태 변경 폼 */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #333;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* 알림 메시지 */
+.alert {
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+    font-size: 14px;
+    display: none;
+}
+
+.alert.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+    display: block;
+}
+
+/* 참가자 목록 */
+.participant-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.participant-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+
+.participant-item:hover {
+    background: #f0f0f0;
+}
+
+.participant-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.participant-num {
+    width: 28px;
+    height: 28px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.participant-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-badge.normal {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-badge.rest {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+/* 통계 */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #888;
+    margin-top: 3px;
+}
+
+/* 홈으로 돌아가기 */
+.back-link {
+    display: block;
+    text-align: center;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0.9;
+    margin-top: 10px;
+}
+
+.back-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
 </style>
 </head>
-
 <body>
 
-<h1>SRT Plank Challenge – ADMIN</h1>
+<div class="container">
+    <div class="header">
+        <h1>⚙️ SRT Challenge 관리자</h1>
+        <p>참가자 상태를 관리합니다</p>
+    </div>
 
-<div class="box">
-    <h3>⚙ 참가자 상태 관리</h3>
-    <select id="pSelect"></select>
-    <select id="statusSelect">
-        <option value="normal">정상</option>
-        <option value="rest">휴식</option>
-    </select>
-    <button class="btn" onclick="updateStatus()">상태 변경</button>
-    <div id="statusMsg"></div>
+    <!-- 통계 카드 -->
+    <div class="card">
+        <div class="card-title"><span class="icon">📊</span> 현황</div>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalCount">24</div>
+                <div class="stat-label">전체</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="normalCount">0</div>
+                <div class="stat-label">활동중</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="restCount">0</div>
+                <div class="stat-label">휴식중</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상태 변경 카드 -->
+    <div class="card">
+        <div class="card-title"><span class="icon">👤</span> 회원 상태 변경</div>
+        
+        <div class="form-group">
+            <label>참가자 선택</label>
+            <select id="pSelect">
+                <option value="">-- 참가자를 선택하세요 --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>상태 선택</label>
+            <select id="statusSelect">
+                <option value="normal">정상 (활동중)</option>
+                <option value="rest">휴식</option>
+            </select>
+        </div>
+        
+        <button class="btn-primary" onclick="updateStatus()">상태 변경하기</button>
+        
+        <div class="alert" id="statusMsg"></div>
+    </div>
+
+    <!-- 참가자 목록 카드 -->
+    <div class="card">
+        <div class="card-title"><span class="icon">👥</span> 참가자 목록</div>
+        <div class="participant-list" id="participantList"></div>
+    </div>
+
+    <a href="index.html" class="back-link">← 메인 화면으로 돌아가기</a>
 </div>
 
 <script>
+// 기본 참가자 데이터
+const defaultParticipants = {
+    1: { name: '김형태', status: 'normal' },
+    2: { name: '김미영', status: 'normal' },
+    3: { name: '김호종', status: 'normal' },
+    4: { name: '김상남', status: 'normal' },
+    5: { name: '김현희', status: 'normal' },
+    6: { name: '이미숙', status: 'normal' },
+    7: { name: '소병득', status: 'normal' },
+    8: { name: '박은정', status: 'normal' },
+    9: { name: '김만환', status: 'normal' },
+    10: { name: '윤종석', status: 'normal' },
+    11: { name: '박창선', status: 'normal' },
+    12: { name: '박경현', status: 'normal' },
+    13: { name: '김유성', status: 'normal' },
+    14: { name: '안지훈', status: 'normal' },
+    15: { name: '김민주', status: 'normal' },
+    16: { name: '박무영', status: 'normal' },
+    17: { name: '김병기', status: 'normal' },
+    18: { name: '김재산', status: 'normal' },
+    19: { name: '강동현', status: 'normal' },
+    20: { name: '손미연', status: 'normal' },
+    21: { name: '이경민', status: 'normal' },
+    22: { name: '강현정', status: 'normal' },
+    23: { name: '박진희', status: 'normal' },
+    24: { name: '안길석', status: 'normal' }
+};
+
 let participants = {};
+let db;
 
-db.ref("participants").once("value", snap => {
-    participants = snap.val();
-    const sel = document.getElementById("pSelect");
-    Object.keys(participants).forEach(id => {
-        sel.innerHTML += `<option value="${id}">${id} - ${participants[id].name}</option>`;
+// Firebase 초기화 확인
+function initFirebase() {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+        db = firebase.database();
+        loadParticipants();
+    } else {
+        // Firebase 없으면 기본 데이터 사용
+        participants = defaultParticipants;
+        renderAll();
+    }
+}
+
+// 참가자 데이터 로드
+function loadParticipants() {
+    db.ref("participants").on("value", snap => {
+        const data = snap.val();
+        if (data) {
+            participants = data;
+        } else {
+            // 데이터가 없으면 기본값으로 초기화
+            participants = defaultParticipants;
+            db.ref("participants").set(defaultParticipants);
+        }
+        renderAll();
     });
-});
+}
 
-function updateStatus(){
+// 전체 렌더링
+function renderAll() {
+    renderSelect();
+    renderParticipantList();
+    updateStats();
+}
+
+// 셀렉트 박스 렌더링
+function renderSelect() {
+    const sel = document.getElementById("pSelect");
+    sel.innerHTML = '<option value="">-- 참가자를 선택하세요 --</option>';
+    
+    Object.keys(participants).sort((a, b) => Number(a) - Number(b)).forEach(id => {
+        const p = participants[id];
+        const statusText = p.status === 'rest' ? ' (휴식중)' : '';
+        sel.innerHTML += `<option value="${id}">${id}. ${p.name}${statusText}</option>`;
+    });
+}
+
+// 참가자 목록 렌더링
+function renderParticipantList() {
+    const list = document.getElementById("participantList");
+    list.innerHTML = '';
+    
+    Object.keys(participants).sort((a, b) => Number(a) - Number(b)).forEach(id => {
+        const p = participants[id];
+        const statusClass = p.status === 'rest' ? 'rest' : 'normal';
+        const statusText = p.status === 'rest' ? '휴식' : '활동';
+        
+        list.innerHTML += `
+            <div class="participant-item">
+                <div class="participant-info">
+                    <div class="participant-num">${id}</div>
+                    <div class="participant-name">${p.name}</div>
+                </div>
+                <div class="status-badge ${statusClass}">${statusText}</div>
+            </div>
+        `;
+    });
+}
+
+// 통계 업데이트
+function updateStats() {
+    const total = Object.keys(participants).length;
+    let normalCount = 0;
+    let restCount = 0;
+    
+    Object.values(participants).forEach(p => {
+        if (p.status === 'rest') {
+            restCount++;
+        } else {
+            normalCount++;
+        }
+    });
+    
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('normalCount').textContent = normalCount;
+    document.getElementById('restCount').textContent = restCount;
+}
+
+// 상태 변경
+function updateStatus() {
     const id = document.getElementById("pSelect").value;
     const status = document.getElementById("statusSelect").value;
-
-    db.ref("participants/"+id).update({ status });
-
-    document.getElementById("statusMsg").innerHTML =
-        `<p><b>${id}번 상태가 '${status}' 로 변경되었습니다.</b></p>`;
+    const msgEl = document.getElementById("statusMsg");
+    
+    if (!id) {
+        msgEl.className = 'alert';
+        msgEl.style.display = 'block';
+        msgEl.style.background = '#ffebee';
+        msgEl.style.color = '#c62828';
+        msgEl.style.border = '1px solid #ef9a9a';
+        msgEl.textContent = '참가자를 선택해주세요.';
+        return;
+    }
+    
+    const name = participants[id].name;
+    const statusText = status === 'rest' ? '휴식' : '정상';
+    
+    // Firebase 업데이트
+    if (db) {
+        db.ref("participants/" + id).update({ status });
+    } else {
+        participants[id].status = status;
+        renderAll();
+    }
+    
+    // 성공 메시지
+    msgEl.className = 'alert success';
+    msgEl.innerHTML = `<strong>${id}. ${name}</strong>님의 상태가 <strong>'${statusText}'</strong>으로 변경되었습니다.`;
+    
+    // 3초 후 메시지 숨기기
+    setTimeout(() => {
+        msgEl.style.display = 'none';
+    }, 3000);
 }
+
+// 초기화
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initFirebase, 500);
+});
 </script>
 
 </body>
 </html>
+
