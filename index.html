@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRT Challenge Check-in</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #fff;
+    padding: 10px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.logo-box {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.logo-img {
+    max-width: 120px;
+    height: auto;
+}
+
+#today {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* 참가자 패널 */
+.panel {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.participant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px 2px;
+    border-radius: 5px;
+    font-size: 11px;
+    min-width: 35px;
+}
+
+.participant .num {
+    font-size: 10px;
+    color: #666;
+}
+
+.participant .name {
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.participant .status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 3px;
+    border: 1px solid #ccc;
+    background: #fff;
+}
+
+.participant.checked {
+    background-color: #4052B5;
+    color: white;
+}
+
+.participant.checked .num {
+    color: rgba(255,255,255,0.9);
+}
+
+.participant.checked .status {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+.participant.late-checked {
+    background-color: #8d6e63;
+    color: white;
+}
+
+.participant.late-checked .num {
+    color: rgba(255,255,255,0.8);
+}
+
+.participant.late-checked .status {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+/* 특별 표시 (카메라 아이콘 등) */
+.participant .badge {
+    font-size: 9px;
+    background: rgba(0,0,0,0.3);
+    padding: 1px 3px;
+    border-radius: 3px;
+    margin-top: 2px;
+}
+
+/* 체크인 리스트 - 2컬럼 */
+#checkin-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 15px;
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    min-height: 20px;
+}
+
+.checkin-item {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.checkin-item .user-num {
+    color: #333;
+}
+
+.checkin-item .user-name {
+    color: #5c6bc0;
+    font-weight: bold;
+}
+
+.checkin-item .message {
+    color: #333;
+}
+
+/* 메시지 내 강조 텍스트 */
+.checkin-item .highlight {
+    text-decoration: underline;
+}
+
+/* 입력 폼 */
+.form {
+    margin-top: 15px;
+}
+
+.form input,
+.form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    border: 2px solid #f0a500;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form input:focus,
+.form textarea:focus {
+    outline: none;
+    border-color: #e09400;
+}
+
+.form textarea {
+    min-height: 40px;
+    resize: vertical;
+}
+
+.form button {
+    padding: 10px 20px;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.form button:hover {
+    background-color: #e8e8e8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="logo-box">
+    <img src="srt-logo.png" class="logo-img" alt="SRT Logo">
+</div>
+
+<h2 id="today"></h2>
+<h3>오늘 인증 현황</h3>
+<div id="participant-panel" class="panel"></div>
+
+<!-- 체크인 리스트가 참가자 패널 바로 아래에 위치 -->
+<div id="checkin-list"></div>
+
+<!-- 입력 폼이 맨 아래에 위치 -->
+<div class="form">
+    <input id="userId" type="number" placeholder="자신의 고유번호를 입력해주세요 (예: 1)">
+    <textarea id="msg" placeholder="인증 메시지를 입력하세요"></textarea>
+    <button onclick="submitCheckin()">출석하기</button>
+</div>
+
+<script>
+// 참가자 데이터
+const participants = [
+    { id: 1, name: '김형태' },
+    { id: 2, name: '김미영' },
+    { id: 3, name: '김호종' },
+    { id: 4, name: '김상남' },
+    { id: 5, name: '김현희' },
+    { id: 6, name: '이미숙' },
+    { id: 7, name: '소병득' },
+    { id: 8, name: '박은정' },
+    { id: 9, name: '김만환' },
+    { id: 10, name: '윤종석' },
+    { id: 11, name: '박창선' },
+    { id: 12, name: '박경현' },
+    { id: 13, name: '김유성' },
+    { id: 14, name: '안지훈' },
+    { id: 15, name: '김민주' },
+    { id: 16, name: '박무영' },
+    { id: 17, name: '김병기' },
+    { id: 18, name: '김재삼' },
+    { id: 19, name: '강동현' },
+    { id: 20, name: '송연' },
+    { id: 21, name: '이경만' },
+    { id: 22, name: '강현정' },
+    { id: 23, name: '박진휘' },
+    { id: 24, name: '안길석' }
+];
+
+// 체크인 데이터 저장
+let checkins = {};
+
+// 오늘 날짜 표시
+function setToday() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    document.getElementById('today').textContent = `${year}-${month}-${day}`;
+}
+
+// 참가자 패널 렌더링
+function renderParticipants() {
+    const panel = document.getElementById('participant-panel');
+    panel.innerHTML = '';
+    
+    participants.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'participant';
+        div.id = `participant-${p.id}`;
+        
+        const checkin = checkins[p.id];
+        if (checkin) {
+            if (checkin.isLate) {
+                div.classList.add('late-checked');
+            } else {
+                div.classList.add('checked');
+            }
+        }
+        
+        div.innerHTML = `
+            <span class="num">${p.id}</span>
+            <span class="name">${p.name}</span>
+            ${checkin && checkin.badge ? `<span class="badge">${checkin.badge}</span>` : ''}
+            <span class="status"></span>
+        `;
+        
+        panel.appendChild(div);
+    });
+}
+
+// 체크인 리스트 렌더링 (2컬럼)
+function renderCheckinList() {
+    const list = document.getElementById('checkin-list');
+    list.innerHTML = '';
+    
+    // 체크인 데이터를 배열로 변환하고 순서대로 정렬
+    const checkinArray = Object.values(checkins).sort((a, b) => a.oderId - b.oderId);
+    
+    checkinArray.forEach(checkin => {
+        const div = document.createElement('div');
+        div.className = 'checkin-item';
+        
+        // 메시지 포맷팅 (밑줄 처리)
+        let formattedMsg = checkin.message;
+        // 특정 키워드에 밑줄 추가 (예: 스푸윗, 사30, 트30 등)
+        formattedMsg = formattedMsg.replace(/(스푸윗|사\d+|트\d+)/g, '<span class="highlight">$1</span>');
+        
+        div.innerHTML = `<span class="user-num">${checkin.userId}.</span><span class="user-name">${checkin.userName}</span> ${formattedMsg}`;
+        list.appendChild(div);
+    });
+}
+
+// 출석 제출
+function submitCheckin() {
+    const userIdInput = document.getElementById('userId');
+    const msgInput = document.getElementById('msg');
+    
+    const userId = parseInt(userIdInput.value);
+    const message = msgInput.value.trim();
+    
+    if (!userId || userId < 1 || userId > 24) {
+        alert('올바른 고유번호를 입력해주세요 (1-24)');
+        return;
+    }
+    
+    if (!message) {
+        alert('인증 메시지를 입력해주세요');
+        return;
+    }
+    
+    const participant = participants.find(p => p.id === userId);
+    if (!participant) {
+        alert('참가자를 찾을 수 없습니다');
+        return;
+    }
+    
+    // 체크인 데이터 추가
+    const now = new Date();
+    const isLate = now.getHours() >= 22; // 22시 이후는 늦은 출석
+    
+    checkins[userId] = {
+        oderId: Object.keys(checkins).length + 1,
+        userId: userId,
+        userName: participant.name,
+        message: message,
+        timestamp: now.toISOString(),
+        isLate: isLate,
+        badge: null
+    };
+    
+    // Firebase에 저장 (Firebase가 초기화되어 있다면)
+    if (typeof firebase !== 'undefined' && firebase.database) {
+        const todayKey = document.getElementById('today').textContent;
+        firebase.database().ref(`checkins/${todayKey}/${userId}`).set(checkins[userId]);
+    }
+    
+    // UI 업데이트
+    renderParticipants();
+    renderCheckinList();
+    
+    // 입력 필드 초기화 (고유번호는 유지)
+    msgInput.value = '';
+}
+
+// Firebase에서 데이터 로드
+function loadCheckins() {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+        const todayKey = document.getElementById('today').textContent;
+        firebase.database().ref(`checkins/${todayKey}`).on('value', (snapshot) => {
+            checkins = snapshot.val() || {};
+            renderParticipants();
+            renderCheckinList();
+        });
+    }
+}
+
+// 초기화
+document.addEventListener('DOMContentLoaded', () => {
+    setToday();
+    renderParticipants();
+    
+    // Firebase 로드 시도
+    setTimeout(() => {
+        loadCheckins();
+    }, 1000);
+});
+</script>
+
+</body>
+</html>
