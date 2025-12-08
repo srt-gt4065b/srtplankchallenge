@@ -109,6 +109,21 @@ h3 {
     border-color: #ffc107;
 }
 
+/* 휴식 상태 */
+.participant.resting {
+    background-color: #B8860B;
+    color: white;
+}
+
+.participant.resting .num {
+    color: rgba(255,255,255,0.8);
+}
+
+.participant.resting .status {
+    background-color: #DAA520;
+    border-color: #DAA520;
+}
+
 /* 특별 표시 (카메라 아이콘 등) */
 .participant .badge {
     font-size: 9px;
@@ -246,6 +261,9 @@ const participants = [
 // 체크인 데이터 저장
 let checkins = {};
 
+// 참가자 상태 데이터 (Firebase에서 로드)
+let participantStatus = {};
+
 // 오늘 날짜 표시
 function setToday() {
     const today = new Date();
@@ -266,7 +284,14 @@ function renderParticipants() {
         div.id = `participant-${p.id}`;
         
         const checkin = checkins[p.id];
-        if (checkin) {
+        const status = participantStatus[p.id];
+        
+        // 휴식 상태 체크
+        if (status && status.status === 'rest') {
+            div.classList.add('resting');
+        }
+        // 출석 체크
+        else if (checkin) {
             if (checkin.isLate) {
                 div.classList.add('late-checked');
             } else {
@@ -371,6 +396,16 @@ function loadCheckins() {
     }
 }
 
+// Firebase에서 참가자 상태 로드
+function loadParticipantStatus() {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+        firebase.database().ref('participants').on('value', (snapshot) => {
+            participantStatus = snapshot.val() || {};
+            renderParticipants();
+        });
+    }
+}
+
 // 초기화
 document.addEventListener('DOMContentLoaded', () => {
     setToday();
@@ -378,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Firebase 로드 시도
     setTimeout(() => {
+        loadParticipantStatus();
         loadCheckins();
     }, 1000);
 });
