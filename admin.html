@@ -22,7 +22,7 @@ body {
 }
 
 .container {
-    max-width: 600px;
+    max-width: 800px;
     margin: 0 auto;
 }
 
@@ -42,6 +42,46 @@ body {
 .header p {
     font-size: 14px;
     opacity: 0.9;
+}
+
+/* 탭 네비게이션 */
+.tab-nav {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    background: rgba(255,255,255,0.2);
+    padding: 5px;
+    border-radius: 12px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #667eea;
+}
+
+.tab-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.2);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 /* 카드 스타일 */
@@ -65,6 +105,199 @@ body {
 
 .card-title .icon {
     font-size: 20px;
+}
+
+/* 통계 대시보드 */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    text-align: center;
+}
+
+.dashboard-card.full-width {
+    grid-column: span 2;
+}
+
+.dashboard-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.dashboard-number {
+    font-size: 36px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.dashboard-number.warning {
+    color: #f57c00;
+}
+
+.dashboard-number.danger {
+    color: #e53935;
+}
+
+.dashboard-number.success {
+    color: #43a047;
+}
+
+.dashboard-label {
+    font-size: 13px;
+    color: #888;
+    margin-top: 5px;
+}
+
+/* 월 선택 */
+.month-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.month-btn {
+    padding: 8px 15px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.month-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.month-display {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    min-width: 150px;
+    text-align: center;
+}
+
+/* 출석부 테이블 */
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.attendance-table th,
+.attendance-table td {
+    padding: 8px 4px;
+    text-align: center;
+    border: 1px solid #e0e0e0;
+}
+
+.attendance-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+}
+
+.attendance-table th.name-col {
+    min-width: 60px;
+    position: sticky;
+    left: 0;
+    background: #f5f5f5;
+    z-index: 1;
+}
+
+.attendance-table td.name-col {
+    position: sticky;
+    left: 0;
+    background: white;
+    font-weight: 500;
+    z-index: 1;
+}
+
+.attendance-table .day-header {
+    min-width: 28px;
+}
+
+.attendance-table .present {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.attendance-table .absent {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.attendance-table .rest {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.attendance-table .future {
+    background: #fafafa;
+    color: #ccc;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 15px;
+}
+
+/* 결석자 리스트 */
+.absent-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.absent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background: #ffebee;
+    border-radius: 10px;
+    border-left: 4px solid #e53935;
+}
+
+.absent-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.absent-num {
+    width: 28px;
+    height: 28px;
+    background: #e53935;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.absent-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.absent-count {
+    font-size: 14px;
+    font-weight: 700;
+    color: #e53935;
 }
 
 /* 상태 변경 폼 */
@@ -115,10 +348,6 @@ body {
     box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
-.btn-primary:active {
-    transform: translateY(0);
-}
-
 /* 알림 메시지 */
 .alert {
     padding: 12px 15px;
@@ -149,11 +378,6 @@ body {
     padding: 12px 15px;
     background: #f8f9fa;
     border-radius: 10px;
-    transition: background 0.2s;
-}
-
-.participant-item:hover {
-    background: #f0f0f0;
 }
 
 .participant-info {
@@ -198,31 +422,56 @@ body {
     color: #f57c00;
 }
 
-/* 통계 */
-.stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 15px;
+/* 랭킹 */
+.ranking-list {
+    counter-reset: ranking;
 }
 
-.stat-item {
-    text-align: center;
-    padding: 15px 10px;
+.ranking-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
     background: #f8f9fa;
     border-radius: 10px;
+    margin-bottom: 8px;
 }
 
-.stat-number {
-    font-size: 24px;
+.ranking-item::before {
+    counter-increment: ranking;
+    content: counter(ranking);
+    width: 28px;
+    height: 28px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 12px;
+}
+
+.ranking-item:nth-child(1)::before {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+}
+
+.ranking-item:nth-child(2)::before {
+    background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+}
+
+.ranking-item:nth-child(3)::before {
+    background: linear-gradient(135deg, #CD7F32, #A0522D);
+}
+
+.ranking-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.ranking-score {
     font-weight: 700;
     color: #667eea;
-}
-
-.stat-label {
-    font-size: 11px;
-    color: #888;
-    margin-top: 3px;
 }
 
 /* 홈으로 돌아가기 */
@@ -240,6 +489,31 @@ body {
     opacity: 1;
     text-decoration: underline;
 }
+
+/* 범례 */
+.legend {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+.legend-color.present { background: #e3f2fd; }
+.legend-color.absent { background: #ffebee; }
+.legend-color.rest { background: #fff3e0; }
 </style>
 </head>
 <body>
@@ -247,56 +521,119 @@ body {
 <div class="container">
     <div class="header">
         <h1>⚙️ SRT Challenge 관리자</h1>
-        <p>참가자 상태를 관리합니다</p>
+        <p>출석 현황 및 참가자 관리</p>
     </div>
 
-    <!-- 통계 카드 -->
-    <div class="card">
-        <div class="card-title"><span class="icon">📊</span> 현황</div>
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-number" id="totalCount">24</div>
-                <div class="stat-label">전체</div>
+    <!-- 탭 네비게이션 -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="showTab('dashboard')">📊 대시보드</button>
+        <button class="tab-btn" onclick="showTab('attendance')">📅 월별 출석부</button>
+        <button class="tab-btn" onclick="showTab('manage')">👤 회원관리</button>
+    </div>
+
+    <!-- 대시보드 탭 -->
+    <div id="tab-dashboard" class="tab-content active">
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="dashboard-icon">👥</div>
+                <div class="dashboard-number" id="dashTotalMembers">24</div>
+                <div class="dashboard-label">전체 회원</div>
             </div>
-            <div class="stat-item">
-                <div class="stat-number" id="normalCount">0</div>
-                <div class="stat-label">활동중</div>
+            <div class="dashboard-card">
+                <div class="dashboard-icon">🏃</div>
+                <div class="dashboard-number" id="dashActiveMembers">0</div>
+                <div class="dashboard-label">활동중</div>
             </div>
-            <div class="stat-item">
-                <div class="stat-number" id="restCount">0</div>
-                <div class="stat-label">휴식중</div>
+            <div class="dashboard-card">
+                <div class="dashboard-icon">✅</div>
+                <div class="dashboard-number success" id="dashTodayPresent">0</div>
+                <div class="dashboard-label">오늘 출석</div>
             </div>
+            <div class="dashboard-card">
+                <div class="dashboard-icon">❌</div>
+                <div class="dashboard-number danger" id="dashTodayAbsent">0</div>
+                <div class="dashboard-label">오늘 미출석</div>
+            </div>
+            <div class="dashboard-card full-width">
+                <div class="dashboard-icon">📈</div>
+                <div class="dashboard-number" id="dashMonthlyRate">0%</div>
+                <div class="dashboard-label">이번 달 평균 출석률</div>
+            </div>
+        </div>
+
+        <!-- 출석 랭킹 -->
+        <div class="card">
+            <div class="card-title"><span class="icon">🏆</span> 이번 달 출석 랭킹 TOP 5</div>
+            <div class="ranking-list" id="rankingList"></div>
+        </div>
+
+        <!-- 오늘 결석자 -->
+        <div class="card">
+            <div class="card-title"><span class="icon">⚠️</span> 오늘 미출석자</div>
+            <div class="absent-list" id="todayAbsentList"></div>
+            <p id="noAbsentMsg" style="text-align:center; color:#888; padding:20px; display:none;">모두 출석했습니다! 🎉</p>
         </div>
     </div>
 
-    <!-- 상태 변경 카드 -->
-    <div class="card">
-        <div class="card-title"><span class="icon">👤</span> 회원 상태 변경</div>
-        
-        <div class="form-group">
-            <label>참가자 선택</label>
-            <select id="pSelect">
-                <option value="">-- 참가자를 선택하세요 --</option>
-            </select>
+    <!-- 월별 출석부 탭 -->
+    <div id="tab-attendance" class="tab-content">
+        <div class="month-selector">
+            <button class="month-btn" onclick="changeMonth(-1)">◀</button>
+            <div class="month-display" id="monthDisplay">2025년 12월</div>
+            <button class="month-btn" onclick="changeMonth(1)">▶</button>
         </div>
-        
-        <div class="form-group">
-            <label>상태 선택</label>
-            <select id="statusSelect">
-                <option value="normal">정상 (활동중)</option>
-                <option value="rest">휴식</option>
-            </select>
+
+        <div class="card">
+            <div class="card-title"><span class="icon">📋</span> 월별 출석부</div>
+            <div class="table-wrapper">
+                <table class="attendance-table" id="attendanceTable">
+                    <thead id="attendanceHead"></thead>
+                    <tbody id="attendanceBody"></tbody>
+                </table>
+            </div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color present"></div> 출석</div>
+                <div class="legend-item"><div class="legend-color absent"></div> 결석</div>
+                <div class="legend-item"><div class="legend-color rest"></div> 휴식</div>
+            </div>
         </div>
-        
-        <button class="btn-primary" onclick="updateStatus()">상태 변경하기</button>
-        
-        <div class="alert" id="statusMsg"></div>
+
+        <!-- 월별 결석자 통계 -->
+        <div class="card">
+            <div class="card-title"><span class="icon">📊</span> 월별 결석 횟수</div>
+            <div class="absent-list" id="monthlyAbsentList"></div>
+        </div>
     </div>
 
-    <!-- 참가자 목록 카드 -->
-    <div class="card">
-        <div class="card-title"><span class="icon">👥</span> 참가자 목록</div>
-        <div class="participant-list" id="participantList"></div>
+    <!-- 회원관리 탭 -->
+    <div id="tab-manage" class="tab-content">
+        <div class="card">
+            <div class="card-title"><span class="icon">👤</span> 회원 상태 변경</div>
+            
+            <div class="form-group">
+                <label>참가자 선택</label>
+                <select id="pSelect">
+                    <option value="">-- 참가자를 선택하세요 --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>상태 선택</label>
+                <select id="statusSelect">
+                    <option value="normal">정상 (활동중)</option>
+                    <option value="rest">휴식</option>
+                </select>
+            </div>
+            
+            <button class="btn-primary" onclick="updateStatus()">상태 변경하기</button>
+            
+            <div class="alert" id="statusMsg"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><span class="icon">👥</span> 참가자 목록</div>
+            <div class="participant-list" id="participantList"></div>
+        </div>
     </div>
 
     <a href="index.html" class="back-link">← 메인 화면으로 돌아가기</a>
@@ -332,40 +669,312 @@ const defaultParticipants = {
 };
 
 let participants = {};
+let allCheckins = {};
 let db;
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth() + 1;
 
-// Firebase 초기화 확인
+// 탭 전환
+function showTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tabName).classList.add('active');
+    
+    if (tabName === 'attendance') {
+        renderAttendanceTable();
+    }
+}
+
+// Firebase 초기화
 function initFirebase() {
     if (typeof firebase !== 'undefined' && firebase.database) {
         db = firebase.database();
-        loadParticipants();
+        loadAllData();
     } else {
-        // Firebase 없으면 기본 데이터 사용
         participants = defaultParticipants;
         renderAll();
     }
 }
 
-// 참가자 데이터 로드
-function loadParticipants() {
+// 모든 데이터 로드
+function loadAllData() {
+    // 참가자 데이터
     db.ref("participants").on("value", snap => {
         const data = snap.val();
         if (data) {
             participants = data;
         } else {
-            // 데이터가 없으면 기본값으로 초기화
             participants = defaultParticipants;
             db.ref("participants").set(defaultParticipants);
         }
+        renderAll();
+    });
+    
+    // 전체 체크인 데이터
+    db.ref("checkins").on("value", snap => {
+        allCheckins = snap.val() || {};
         renderAll();
     });
 }
 
 // 전체 렌더링
 function renderAll() {
+    renderDashboard();
     renderSelect();
     renderParticipantList();
-    updateStats();
+    renderAttendanceTable();
+}
+
+// 대시보드 렌더링
+function renderDashboard() {
+    const total = Object.keys(participants).length;
+    let activeCount = 0;
+    let restCount = 0;
+    
+    Object.values(participants).forEach(p => {
+        if (p.status === 'rest') restCount++;
+        else activeCount++;
+    });
+    
+    // 오늘 출석 현황
+    const today = getTodayKey();
+    const todayCheckins = allCheckins[today] || {};
+    const todayPresentCount = Object.keys(todayCheckins).length;
+    const todayAbsentCount = activeCount - todayPresentCount;
+    
+    document.getElementById('dashTotalMembers').textContent = total;
+    document.getElementById('dashActiveMembers').textContent = activeCount;
+    document.getElementById('dashTodayPresent').textContent = todayPresentCount;
+    document.getElementById('dashTodayAbsent').textContent = Math.max(0, todayAbsentCount);
+    
+    // 월별 출석률 계산
+    const monthlyRate = calculateMonthlyRate();
+    document.getElementById('dashMonthlyRate').textContent = monthlyRate + '%';
+    
+    // 출석 랭킹
+    renderRanking();
+    
+    // 오늘 미출석자
+    renderTodayAbsent(todayCheckins);
+}
+
+// 오늘 날짜 키
+function getTodayKey() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// 월별 출석률 계산
+function calculateMonthlyRate() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const currentDay = today.getDate();
+    
+    let totalExpected = 0;
+    let totalPresent = 0;
+    
+    const activeMembers = Object.entries(participants).filter(([id, p]) => p.status !== 'rest');
+    
+    for (let day = 1; day <= currentDay; day++) {
+        const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayCheckins = allCheckins[dateKey] || {};
+        
+        totalExpected += activeMembers.length;
+        totalPresent += Object.keys(dayCheckins).filter(id => {
+            const p = participants[id];
+            return p && p.status !== 'rest';
+        }).length;
+    }
+    
+    if (totalExpected === 0) return 0;
+    return Math.round((totalPresent / totalExpected) * 100);
+}
+
+// 출석 랭킹 렌더링
+function renderRanking() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const currentDay = today.getDate();
+    
+    // 각 참가자별 출석 횟수 계산
+    const attendanceCounts = {};
+    Object.keys(participants).forEach(id => {
+        attendanceCounts[id] = 0;
+    });
+    
+    for (let day = 1; day <= currentDay; day++) {
+        const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayCheckins = allCheckins[dateKey] || {};
+        
+        Object.keys(dayCheckins).forEach(id => {
+            if (attendanceCounts[id] !== undefined) {
+                attendanceCounts[id]++;
+            }
+        });
+    }
+    
+    // 정렬
+    const sorted = Object.entries(attendanceCounts)
+        .map(([id, count]) => ({ id, name: participants[id]?.name || '', count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+    
+    const list = document.getElementById('rankingList');
+    list.innerHTML = '';
+    
+    sorted.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'ranking-item';
+        div.innerHTML = `
+            <span class="ranking-name">${item.id}. ${item.name}</span>
+            <span class="ranking-score">${item.count}일</span>
+        `;
+        list.appendChild(div);
+    });
+}
+
+// 오늘 미출석자 렌더링
+function renderTodayAbsent(todayCheckins) {
+    const list = document.getElementById('todayAbsentList');
+    const noMsg = document.getElementById('noAbsentMsg');
+    list.innerHTML = '';
+    
+    const absentMembers = [];
+    
+    Object.entries(participants).forEach(([id, p]) => {
+        if (p.status !== 'rest' && !todayCheckins[id]) {
+            absentMembers.push({ id, name: p.name });
+        }
+    });
+    
+    if (absentMembers.length === 0) {
+        noMsg.style.display = 'block';
+        return;
+    }
+    
+    noMsg.style.display = 'none';
+    
+    absentMembers.forEach(member => {
+        const div = document.createElement('div');
+        div.className = 'absent-item';
+        div.innerHTML = `
+            <div class="absent-info">
+                <div class="absent-num">${member.id}</div>
+                <div class="absent-name">${member.name}</div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+// 월 변경
+function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+    } else if (currentMonth < 1) {
+        currentMonth = 12;
+        currentYear--;
+    }
+    
+    document.getElementById('monthDisplay').textContent = `${currentYear}년 ${currentMonth}월`;
+    renderAttendanceTable();
+}
+
+// 출석부 테이블 렌더링
+function renderAttendanceTable() {
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() + 1 === currentMonth;
+    const currentDay = isCurrentMonth ? today.getDate() : daysInMonth;
+    
+    // 헤더
+    const thead = document.getElementById('attendanceHead');
+    let headerHTML = '<tr><th class="name-col">이름</th>';
+    for (let day = 1; day <= daysInMonth; day++) {
+        headerHTML += `<th class="day-header">${day}</th>`;
+    }
+    headerHTML += '<th>출석</th><th>결석</th></tr>';
+    thead.innerHTML = headerHTML;
+    
+    // 바디
+    const tbody = document.getElementById('attendanceBody');
+    tbody.innerHTML = '';
+    
+    // 월별 결석 통계 저장
+    const absentStats = {};
+    
+    Object.entries(participants).sort((a, b) => Number(a[0]) - Number(b[0])).forEach(([id, p]) => {
+        let presentCount = 0;
+        let absentCount = 0;
+        
+        let rowHTML = `<tr><td class="name-col">${p.name}</td>`;
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayCheckins = allCheckins[dateKey] || {};
+            
+            if (day > currentDay && isCurrentMonth) {
+                rowHTML += '<td class="future">-</td>';
+            } else if (p.status === 'rest') {
+                rowHTML += '<td class="rest">휴</td>';
+            } else if (dayCheckins[id]) {
+                rowHTML += '<td class="present">O</td>';
+                presentCount++;
+            } else {
+                rowHTML += '<td class="absent">X</td>';
+                absentCount++;
+            }
+        }
+        
+        rowHTML += `<td><strong>${presentCount}</strong></td>`;
+        rowHTML += `<td><strong style="color:#e53935">${absentCount}</strong></td>`;
+        rowHTML += '</tr>';
+        
+        tbody.innerHTML += rowHTML;
+        
+        if (absentCount > 0 && p.status !== 'rest') {
+            absentStats[id] = { name: p.name, count: absentCount };
+        }
+    });
+    
+    // 월별 결석자 통계 렌더링
+    renderMonthlyAbsent(absentStats);
+}
+
+// 월별 결석자 통계 렌더링
+function renderMonthlyAbsent(absentStats) {
+    const list = document.getElementById('monthlyAbsentList');
+    list.innerHTML = '';
+    
+    const sorted = Object.entries(absentStats)
+        .sort((a, b) => b[1].count - a[1].count);
+    
+    if (sorted.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">결석자가 없습니다! 🎉</p>';
+        return;
+    }
+    
+    sorted.forEach(([id, data]) => {
+        const div = document.createElement('div');
+        div.className = 'absent-item';
+        div.innerHTML = `
+            <div class="absent-info">
+                <div class="absent-num">${id}</div>
+                <div class="absent-name">${data.name}</div>
+            </div>
+            <div class="absent-count">${data.count}회 결석</div>
+        `;
+        list.appendChild(div);
+    });
 }
 
 // 셀렉트 박스 렌더링
@@ -402,25 +1011,6 @@ function renderParticipantList() {
     });
 }
 
-// 통계 업데이트
-function updateStats() {
-    const total = Object.keys(participants).length;
-    let normalCount = 0;
-    let restCount = 0;
-    
-    Object.values(participants).forEach(p => {
-        if (p.status === 'rest') {
-            restCount++;
-        } else {
-            normalCount++;
-        }
-    });
-    
-    document.getElementById('totalCount').textContent = total;
-    document.getElementById('normalCount').textContent = normalCount;
-    document.getElementById('restCount').textContent = restCount;
-}
-
 // 상태 변경
 function updateStatus() {
     const id = document.getElementById("pSelect").value;
@@ -440,7 +1030,6 @@ function updateStatus() {
     const name = participants[id].name;
     const statusText = status === 'rest' ? '휴식' : '정상';
     
-    // Firebase 업데이트
     if (db) {
         db.ref("participants/" + id).update({ status });
     } else {
@@ -448,11 +1037,9 @@ function updateStatus() {
         renderAll();
     }
     
-    // 성공 메시지
     msgEl.className = 'alert success';
     msgEl.innerHTML = `<strong>${id}. ${name}</strong>님의 상태가 <strong>'${statusText}'</strong>으로 변경되었습니다.`;
     
-    // 3초 후 메시지 숨기기
     setTimeout(() => {
         msgEl.style.display = 'none';
     }, 3000);
@@ -460,10 +1047,10 @@ function updateStatus() {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('monthDisplay').textContent = `${currentYear}년 ${currentMonth}월`;
     setTimeout(initFirebase, 500);
 });
 </script>
 
 </body>
 </html>
-
