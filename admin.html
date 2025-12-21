@@ -3,1054 +3,292 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SRT Challenge Admin</title>
+<title>SRT Challenge Admin - 통합 관리자</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="firebase-config.js"></script>
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 20px;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-/* 헤더 */
-.header {
-    text-align: center;
-    color: white;
-    margin-bottom: 25px;
-}
-
-.header h1 {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
-
-.header p {
-    font-size: 14px;
-    opacity: 0.9;
-}
-
-/* 탭 네비게이션 */
-.tab-nav {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 20px;
-    background: rgba(255,255,255,0.2);
-    padding: 5px;
-    border-radius: 12px;
-}
-
-.tab-btn {
-    flex: 1;
-    padding: 12px;
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s;
-}
-
-.tab-btn.active {
-    background: white;
-    color: #667eea;
-}
-
-.tab-btn:hover:not(.active) {
-    background: rgba(255,255,255,0.2);
-}
-
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-}
-
-/* 카드 스타일 */
-.card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-}
-
-.card-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.card-title .icon {
-    font-size: 20px;
-}
-
-/* 통계 대시보드 */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.dashboard-card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    text-align: center;
-}
-
-.dashboard-card.full-width {
-    grid-column: span 2;
-}
-
-.dashboard-icon {
-    font-size: 32px;
-    margin-bottom: 10px;
-}
-
-.dashboard-number {
-    font-size: 36px;
-    font-weight: 700;
-    color: #667eea;
-}
-
-.dashboard-number.warning {
-    color: #f57c00;
-}
-
-.dashboard-number.danger {
-    color: #e53935;
-}
-
-.dashboard-number.success {
-    color: #43a047;
-}
-
-.dashboard-label {
-    font-size: 13px;
-    color: #888;
-    margin-top: 5px;
-}
-
-/* 월 선택 */
-.month-selector {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-    justify-content: center;
-}
-
-.month-btn {
-    padding: 8px 15px;
-    background: rgba(255,255,255,0.2);
-    border: none;
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 18px;
-}
-
-.month-btn:hover {
-    background: rgba(255,255,255,0.3);
-}
-
-.month-display {
-    color: white;
-    font-size: 18px;
-    font-weight: 700;
-    min-width: 150px;
-    text-align: center;
-}
-
-/* 출석부 테이블 */
-.attendance-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-}
-
-.attendance-table th,
-.attendance-table td {
-    padding: 8px 4px;
-    text-align: center;
-    border: 1px solid #e0e0e0;
-}
-
-.attendance-table th {
-    background: #f5f5f5;
-    font-weight: 600;
-    color: #333;
-}
-
-.attendance-table th.name-col {
-    min-width: 60px;
-    position: sticky;
-    left: 0;
-    background: #f5f5f5;
-    z-index: 1;
-}
-
-.attendance-table td.name-col {
-    position: sticky;
-    left: 0;
-    background: white;
-    font-weight: 500;
-    z-index: 1;
-}
-
-.attendance-table .day-header {
-    min-width: 28px;
-}
-
-.attendance-table .present {
-    background: #e3f2fd;
-    color: #1976d2;
-}
-
-.attendance-table .absent {
-    background: #ffebee;
-    color: #c62828;
-}
-
-.attendance-table .rest {
-    background: #fff3e0;
-    color: #f57c00;
-}
-
-.attendance-table .future {
-    background: #fafafa;
-    color: #ccc;
-}
-
-.table-wrapper {
-    overflow-x: auto;
-    margin-bottom: 15px;
-}
-
-/* 결석자 리스트 */
-.absent-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-}
-
-.absent-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 15px;
-    background: #ffebee;
-    border-radius: 10px;
-    border-left: 4px solid #e53935;
-}
-
-.absent-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.absent-num {
-    width: 28px;
-    height: 28px;
-    background: #e53935;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.absent-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-}
-
-.absent-count {
-    font-size: 14px;
-    font-weight: 700;
-    color: #e53935;
-}
-
-/* 상태 변경 폼 */
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    font-size: 13px;
-    color: #666;
-    margin-bottom: 6px;
-    font-weight: 500;
-}
-
-.form-group select {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 14px;
-    color: #333;
-    background: white;
-    cursor: pointer;
-    transition: border-color 0.2s;
-}
-
-.form-group select:focus {
-    outline: none;
-    border-color: #667eea;
-}
-
-.btn-primary {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-}
-
-/* 알림 메시지 */
-.alert {
-    padding: 12px 15px;
-    border-radius: 10px;
-    margin-top: 15px;
-    font-size: 14px;
-    display: none;
-}
-
-.alert.success {
-    background: #e8f5e9;
-    color: #2e7d32;
-    border: 1px solid #a5d6a7;
-    display: block;
-}
-
-/* 참가자 목록 */
-.participant-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-}
-
-.participant-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 15px;
-    background: #f8f9fa;
-    border-radius: 10px;
-}
-
-.participant-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.participant-num {
-    width: 28px;
-    height: 28px;
-    background: #667eea;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.participant-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-}
-
-.status-badge {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.status-badge.normal {
-    background: #e3f2fd;
-    color: #1976d2;
-}
-
-.status-badge.rest {
-    background: #fff3e0;
-    color: #f57c00;
-}
-
-/* 랭킹 */
-.ranking-list {
-    counter-reset: ranking;
-}
-
-.ranking-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    margin-bottom: 8px;
-}
-
-.ranking-item::before {
-    counter-increment: ranking;
-    content: counter(ranking);
-    width: 28px;
-    height: 28px;
-    background: #667eea;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    margin-right: 12px;
-}
-
-.ranking-item:nth-child(1)::before {
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-}
-
-.ranking-item:nth-child(2)::before {
-    background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
-}
-
-.ranking-item:nth-child(3)::before {
-    background: linear-gradient(135deg, #CD7F32, #A0522D);
-}
-
-.ranking-name {
-    flex: 1;
-    font-weight: 500;
-}
-
-.ranking-score {
-    font-weight: 700;
-    color: #667eea;
-}
-
-/* 홈으로 돌아가기 */
-.back-link {
-    display: block;
-    text-align: center;
-    color: white;
-    text-decoration: none;
-    font-size: 14px;
-    opacity: 0.9;
-    margin-top: 10px;
-}
-
-.back-link:hover {
-    opacity: 1;
-    text-decoration: underline;
-}
-
-/* 범례 */
-.legend {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 10px;
-    font-size: 12px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.legend-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-}
-
-.legend-color.present { background: #e3f2fd; }
-.legend-color.absent { background: #ffebee; }
-.legend-color.rest { background: #fff3e0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+.container { max-width: 800px; margin: 0 auto; }
+.header { text-align: center; color: white; margin-bottom: 25px; }
+.tab-nav { display: flex; gap: 5px; margin-bottom: 20px; background: rgba(255,255,255,0.2); padding: 5px; border-radius: 12px; }
+.tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: white; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px; }
+.tab-btn.active { background: white; color: #667eea; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+.card-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
+.dashboard-card { background: white; border-radius: 16px; padding: 20px; text-align: center; }
+.dashboard-number { font-size: 36px; font-weight: 700; color: #667eea; }
+.dashboard-label { font-size: 13px; color: #888; }
+.month-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; justify-content: center; color: white; }
+.month-btn { padding: 8px 15px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 8px; cursor: pointer; }
+.attendance-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+.attendance-table th, .attendance-table td { padding: 8px 4px; text-align: center; border: 1px solid #e0e0e0; }
+.attendance-table th { background: #f5f5f5; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+.form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; }
+.btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+.alert { padding: 12px; border-radius: 10px; margin-top: 15px; font-size: 14px; display: none; text-align: center; }
+.alert.success { background: #e8f5e9; color: #2e7d32; display: block; }
+.ranking-item { display: flex; justify-content: space-between; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 5px; }
 </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>⚙️ SRT Challenge 관리자</h1>
-        <p>출석 현황 및 참가자 관리</p>
+        <h1>⚙️ SRT Challenge 통합 관리자</h1>
+        <p>출석 수정 및 월마감 리포트</p>
     </div>
 
-    <!-- 탭 네비게이션 -->
     <div class="tab-nav">
         <button class="tab-btn active" onclick="showTab('dashboard')">📊 대시보드</button>
-        <button class="tab-btn" onclick="showTab('attendance')">📅 월별 출석부</button>
-        <button class="tab-btn" onclick="showTab('manage')">👤 회원관리</button>
+        <button class="tab-btn" onclick="showTab('attendance')">📅 출석부</button>
+        <button class="tab-btn" onclick="showTab('edit')">✏️ 출석수정</button>
+        <button class="tab-btn" onclick="showTab('report')">💰 정산관리</button>
     </div>
 
-    <!-- 대시보드 탭 -->
     <div id="tab-dashboard" class="tab-content active">
         <div class="dashboard-grid">
             <div class="dashboard-card">
-                <div class="dashboard-icon">👥</div>
-                <div class="dashboard-number" id="dashTotalMembers">24</div>
+                <div class="dashboard-number" id="dashTotalMembers">0</div>
                 <div class="dashboard-label">전체 회원</div>
             </div>
             <div class="dashboard-card">
-                <div class="dashboard-icon">🏃</div>
-                <div class="dashboard-number" id="dashActiveMembers">0</div>
-                <div class="dashboard-label">활동중</div>
-            </div>
-            <div class="dashboard-card">
-                <div class="dashboard-icon">✅</div>
                 <div class="dashboard-number success" id="dashTodayPresent">0</div>
                 <div class="dashboard-label">오늘 출석</div>
             </div>
-            <div class="dashboard-card">
-                <div class="dashboard-icon">❌</div>
-                <div class="dashboard-number danger" id="dashTodayAbsent">0</div>
-                <div class="dashboard-label">오늘 미출석</div>
-            </div>
-            <div class="dashboard-card full-width">
-                <div class="dashboard-icon">📈</div>
-                <div class="dashboard-number" id="dashMonthlyRate">0%</div>
-                <div class="dashboard-label">이번 달 평균 출석률</div>
-            </div>
         </div>
-
-        <!-- 출석 랭킹 -->
         <div class="card">
-            <div class="card-title"><span class="icon">🏆</span> 이번 달 출석 랭킹 TOP 5</div>
-            <div class="ranking-list" id="rankingList"></div>
-        </div>
-
-        <!-- 오늘 결석자 -->
-        <div class="card">
-            <div class="card-title"><span class="icon">⚠️</span> 오늘 미출석자</div>
-            <div class="absent-list" id="todayAbsentList"></div>
-            <p id="noAbsentMsg" style="text-align:center; color:#888; padding:20px; display:none;">모두 출석했습니다! 🎉</p>
+            <div class="card-title">🏆 이번 달 출석 TOP 5</div>
+            <div id="rankingList"></div>
         </div>
     </div>
 
-    <!-- 월별 출석부 탭 -->
     <div id="tab-attendance" class="tab-content">
         <div class="month-selector">
             <button class="month-btn" onclick="changeMonth(-1)">◀</button>
-            <div class="month-display" id="monthDisplay">2025년 12월</div>
+            <div id="monthDisplay" style="font-weight:bold; font-size:18px;"></div>
             <button class="month-btn" onclick="changeMonth(1)">▶</button>
         </div>
-
-        <div class="card">
-            <div class="card-title"><span class="icon">📋</span> 월별 출석부</div>
-            <div class="table-wrapper">
-                <table class="attendance-table" id="attendanceTable">
-                    <thead id="attendanceHead"></thead>
-                    <tbody id="attendanceBody"></tbody>
-                </table>
-            </div>
-            <div class="legend">
-                <div class="legend-item"><div class="legend-color present"></div> 출석</div>
-                <div class="legend-item"><div class="legend-color absent"></div> 결석</div>
-                <div class="legend-item"><div class="legend-color rest"></div> 휴식</div>
-            </div>
-        </div>
-
-        <!-- 월별 결석자 통계 -->
-        <div class="card">
-            <div class="card-title"><span class="icon">📊</span> 월별 결석 횟수</div>
-            <div class="absent-list" id="monthlyAbsentList"></div>
+        <div class="card" style="overflow-x: auto;">
+            <table class="attendance-table">
+                <thead id="attendanceHead"></thead>
+                <tbody id="attendanceBody"></tbody>
+            </table>
         </div>
     </div>
 
-    <!-- 회원관리 탭 -->
-    <div id="tab-manage" class="tab-content">
+    <div id="tab-edit" class="tab-content">
         <div class="card">
-            <div class="card-title"><span class="icon">👤</span> 회원 상태 변경</div>
-            
+            <div class="card-title">✏️ 출석 데이터 수동 수정</div>
             <div class="form-group">
-                <label>참가자 선택</label>
-                <select id="pSelect">
-                    <option value="">-- 참가자를 선택하세요 --</option>
-                </select>
+                <label>날짜 선택</label>
+                <input type="date" id="manualDate">
             </div>
-            
             <div class="form-group">
-                <label>상태 선택</label>
-                <select id="statusSelect">
-                    <option value="normal">정상 (활동중)</option>
-                    <option value="rest">휴식</option>
-                </select>
+                <label>회원 선택</label>
+                <select id="manualUser"></select>
             </div>
-            
-            <button class="btn-primary" onclick="updateStatus()">상태 변경하기</button>
-            
-            <div class="alert" id="statusMsg"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-primary" style="background:#43a047;" onclick="processManual(true)">인증 처리 (O)</button>
+                <button class="btn-primary" style="background:#e53935;" onclick="processManual(false)">인증 취소 (X)</button>
+            </div>
+            <div id="manualMsg" class="alert"></div>
         </div>
-
         <div class="card">
-            <div class="card-title"><span class="icon">👥</span> 참가자 목록</div>
-            <div class="participant-list" id="participantList"></div>
+            <div class="card-title">👤 회원 상태 관리 (정상/휴식)</div>
+            <div class="form-group">
+                <label>회원 선택</label>
+                <select id="statusUserSelect"></select>
+            </div>
+            <div class="form-group">
+                <label>상태 설정</label>
+                <select id="statusValueSelect">
+                    <option value="normal">정상 활동</option>
+                    <option value="rest">휴식 중</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="updateMemberStatus()">상태 변경 저장</button>
         </div>
     </div>
 
-    <a href="index.html" class="back-link">← 메인 화면으로 돌아가기</a>
+    <div id="tab-report" class="tab-content">
+        <div class="card">
+            <div class="card-title">💸 월마감 징수금 리포트 생성</div>
+            <div class="form-group">
+                <label>미출석 1회당 벌금 (원)</label>
+                <input type="number" id="penaltyPrice" value="5000">
+            </div>
+            <button class="btn-primary" onclick="generateMonthlyReport()">리포트 생성하기</button>
+        </div>
+        <div id="reportArea" class="card" style="display:none;">
+            <div id="reportContent"></div>
+            <button class="btn-primary" style="background:#333;" onclick="copyToClipboard()">📋 리포트 텍스트 복사</button>
+        </div>
+    </div>
 </div>
 
 <script>
-// 기본 참가자 데이터
-const defaultParticipants = {
-    1: { name: '김형태', status: 'normal' },
-    2: { name: '김미영', status: 'normal' },
-    3: { name: '김호종', status: 'normal' },
-    4: { name: '김상남', status: 'normal' },
-    5: { name: '김현희', status: 'normal' },
-    6: { name: '이미숙', status: 'normal' },
-    7: { name: '소병득', status: 'normal' },
-    8: { name: '박은정', status: 'normal' },
-    9: { name: '김만환', status: 'normal' },
-    10: { name: '윤종석', status: 'normal' },
-    11: { name: '박창선', status: 'normal' },
-    12: { name: '박경현', status: 'normal' },
-    13: { name: '김유성', status: 'normal' },
-    14: { name: '안지훈', status: 'normal' },
-    15: { name: '김민주', status: 'normal' },
-    16: { name: '박무영', status: 'normal' },
-    17: { name: '김병기', status: 'normal' },
-    18: { name: '김재산', status: 'normal' },
-    19: { name: '강동현', status: 'normal' },
-    20: { name: '손미연', status: 'normal' },
-    21: { name: '이경민', status: 'normal' },
-    22: { name: '강현정', status: 'normal' },
-    23: { name: '박진희', status: 'normal' },
-    24: { name: '안길석', status: 'normal' }
-};
-
 let participants = {};
 let allCheckins = {};
 let db;
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth() + 1;
 
-// 탭 전환
-function showTab(tabName) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    
-    event.target.classList.add('active');
-    document.getElementById('tab-' + tabName).classList.add('active');
-    
-    if (tabName === 'attendance') {
-        renderAttendanceTable();
-    }
+// Firebase 초기화 (config.js가 없을 경우 직접 입력)
+if (typeof firebaseConfig === 'undefined') {
+    var firebaseConfig = {
+        // 여기에 자신의 firebase 설정을 넣으세요
+    };
 }
 
-// Firebase 초기화
-function initFirebase() {
-    if (typeof firebase !== 'undefined' && firebase.database) {
-        db = firebase.database();
-        loadAllData();
-    } else {
-        participants = defaultParticipants;
-        renderAll();
-    }
-}
-
-// 모든 데이터 로드
-function loadAllData() {
-    // 참가자 데이터
+function init() {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    
+    // 데이터 로드
     db.ref("participants").on("value", snap => {
-        const data = snap.val();
-        if (data) {
-            participants = data;
-        } else {
-            participants = defaultParticipants;
-            db.ref("participants").set(defaultParticipants);
-        }
-        renderAll();
+        participants = snap.val() || {};
+        updateSelects();
+        render();
     });
     
-    // 전체 체크인 데이터
     db.ref("checkins").on("value", snap => {
         allCheckins = snap.val() || {};
-        renderAll();
+        render();
     });
 }
 
-// 전체 렌더링
-function renderAll() {
-    renderDashboard();
-    renderSelect();
-    renderParticipantList();
-    renderAttendanceTable();
+function showTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tabName).classList.add('active');
 }
 
-// 대시보드 렌더링
-function renderDashboard() {
-    const total = Object.keys(participants).length;
-    let activeCount = 0;
-    let restCount = 0;
-    
-    Object.values(participants).forEach(p => {
-        if (p.status === 'rest') restCount++;
-        else activeCount++;
-    });
-    
-    // 오늘 출석 현황
-    const today = getTodayKey();
-    const todayCheckins = allCheckins[today] || {};
-    const todayPresentCount = Object.keys(todayCheckins).length;
-    const todayAbsentCount = activeCount - todayPresentCount;
-    
-    document.getElementById('dashTotalMembers').textContent = total;
-    document.getElementById('dashActiveMembers').textContent = activeCount;
-    document.getElementById('dashTodayPresent').textContent = todayPresentCount;
-    document.getElementById('dashTodayAbsent').textContent = Math.max(0, todayAbsentCount);
-    
-    // 월별 출석률 계산
-    const monthlyRate = calculateMonthlyRate();
-    document.getElementById('dashMonthlyRate').textContent = monthlyRate + '%';
-    
-    // 출석 랭킹
-    renderRanking();
-    
-    // 오늘 미출석자
-    renderTodayAbsent(todayCheckins);
-}
-
-// 오늘 날짜 키
-function getTodayKey() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-// 월별 출석률 계산
-function calculateMonthlyRate() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth() + 1;
-    const currentDay = today.getDate();
-    
-    let totalExpected = 0;
-    let totalPresent = 0;
-    
-    const activeMembers = Object.entries(participants).filter(([id, p]) => p.status !== 'rest');
-    
-    for (let day = 1; day <= currentDay; day++) {
-        const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayCheckins = allCheckins[dateKey] || {};
-        
-        totalExpected += activeMembers.length;
-        totalPresent += Object.keys(dayCheckins).filter(id => {
-            const p = participants[id];
-            return p && p.status !== 'rest';
-        }).length;
-    }
-    
-    if (totalExpected === 0) return 0;
-    return Math.round((totalPresent / totalExpected) * 100);
-}
-
-// 출석 랭킹 렌더링
-function renderRanking() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth() + 1;
-    const currentDay = today.getDate();
-    
-    // 각 참가자별 출석 횟수 계산
-    const attendanceCounts = {};
-    Object.keys(participants).forEach(id => {
-        attendanceCounts[id] = 0;
-    });
-    
-    for (let day = 1; day <= currentDay; day++) {
-        const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayCheckins = allCheckins[dateKey] || {};
-        
-        Object.keys(dayCheckins).forEach(id => {
-            if (attendanceCounts[id] !== undefined) {
-                attendanceCounts[id]++;
-            }
+function updateSelects() {
+    const selects = ['manualUser', 'statusUserSelect'];
+    selects.forEach(sId => {
+        const el = document.getElementById(sId);
+        if(!el) return;
+        el.innerHTML = '<option value="">-- 회원 선택 --</option>';
+        Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([id, p]) => {
+            el.innerHTML += `<option value="${id}">${id}. ${p.name}</option>`;
         });
-    }
-    
-    // 정렬
-    const sorted = Object.entries(attendanceCounts)
-        .map(([id, count]) => ({ id, name: participants[id]?.name || '', count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
-    
-    const list = document.getElementById('rankingList');
-    list.innerHTML = '';
-    
-    sorted.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'ranking-item';
-        div.innerHTML = `
-            <span class="ranking-name">${item.id}. ${item.name}</span>
-            <span class="ranking-score">${item.count}일</span>
-        `;
-        list.appendChild(div);
     });
 }
 
-// 오늘 미출석자 렌더링
-function renderTodayAbsent(todayCheckins) {
-    const list = document.getElementById('todayAbsentList');
-    const noMsg = document.getElementById('noAbsentMsg');
-    list.innerHTML = '';
+function render() {
+    // 대시보드
+    document.getElementById('dashTotalMembers').innerText = Object.keys(participants).length;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dashTodayPresent').innerText = Object.keys(allCheckins[today] || {}).length;
     
-    const absentMembers = [];
-    
-    Object.entries(participants).forEach(([id, p]) => {
-        if (p.status !== 'rest' && !todayCheckins[id]) {
-            absentMembers.push({ id, name: p.name });
+    // 랭킹
+    const rankList = document.getElementById('rankingList');
+    rankList.innerHTML = '';
+    const counts = {};
+    Object.keys(allCheckins).forEach(date => {
+        if(date.startsWith(`${currentYear}-${String(currentMonth).padStart(2,'0')}`)) {
+            Object.keys(allCheckins[date]).forEach(id => {
+                counts[id] = (counts[id] || 0) + 1;
+            });
         }
     });
-    
-    if (absentMembers.length === 0) {
-        noMsg.style.display = 'block';
-        return;
-    }
-    
-    noMsg.style.display = 'none';
-    
-    absentMembers.forEach(member => {
-        const div = document.createElement('div');
-        div.className = 'absent-item';
-        div.innerHTML = `
-            <div class="absent-info">
-                <div class="absent-num">${member.id}</div>
-                <div class="absent-name">${member.name}</div>
-            </div>
-        `;
-        list.appendChild(div);
+    Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([id, count]) => {
+        rankList.innerHTML += `<div class="ranking-item"><span>${participants[id]?.name}</span><b>${count}회</b></div>`;
     });
-}
 
-// 월 변경
-function changeMonth(delta) {
-    currentMonth += delta;
-    if (currentMonth > 12) {
-        currentMonth = 1;
-        currentYear++;
-    } else if (currentMonth < 1) {
-        currentMonth = 12;
-        currentYear--;
-    }
-    
-    document.getElementById('monthDisplay').textContent = `${currentYear}년 ${currentMonth}월`;
-    renderAttendanceTable();
-}
+    // 출석부 테이블
+    document.getElementById('monthDisplay').innerText = `${currentYear}년 ${currentMonth}월`;
+    const days = new Date(currentYear, currentMonth, 0).getDate();
+    let head = '<tr><th>이름</th>';
+    for(let i=1; i<=days; i++) head += `<th>${i}</th>`;
+    head += '</tr>';
+    document.getElementById('attendanceHead').innerHTML = head;
 
-// 출석부 테이블 렌더링
-function renderAttendanceTable() {
-    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-    const today = new Date();
-    const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() + 1 === currentMonth;
-    const currentDay = isCurrentMonth ? today.getDate() : daysInMonth;
-    
-    // 헤더
-    const thead = document.getElementById('attendanceHead');
-    let headerHTML = '<tr><th class="name-col">이름</th>';
-    for (let day = 1; day <= daysInMonth; day++) {
-        headerHTML += `<th class="day-header">${day}</th>`;
-    }
-    headerHTML += '<th>출석</th><th>결석</th></tr>';
-    thead.innerHTML = headerHTML;
-    
-    // 바디
-    const tbody = document.getElementById('attendanceBody');
-    tbody.innerHTML = '';
-    
-    // 월별 결석 통계 저장
-    const absentStats = {};
-    
-    Object.entries(participants).sort((a, b) => Number(a[0]) - Number(b[0])).forEach(([id, p]) => {
-        let presentCount = 0;
-        let absentCount = 0;
-        
-        let rowHTML = `<tr><td class="name-col">${p.name}</td>`;
-        
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const dayCheckins = allCheckins[dateKey] || {};
-            
-            if (day > currentDay && isCurrentMonth) {
-                rowHTML += '<td class="future">-</td>';
-            } else if (p.status === 'rest') {
-                rowHTML += '<td class="rest">휴</td>';
-            } else if (dayCheckins[id]) {
-                rowHTML += '<td class="present">O</td>';
-                presentCount++;
-            } else {
-                rowHTML += '<td class="absent">X</td>';
-                absentCount++;
-            }
+    let body = '';
+    Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([id, p]) => {
+        body += `<tr><td>${p.name}</td>`;
+        for(let i=1; i<=days; i++) {
+            const dKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            const ok = allCheckins[dKey] && allCheckins[dKey][id];
+            body += `<td>${p.status==='rest'?'휴':(ok?'O':'X')}</td>`;
         }
-        
-        rowHTML += `<td><strong>${presentCount}</strong></td>`;
-        rowHTML += `<td><strong style="color:#e53935">${absentCount}</strong></td>`;
-        rowHTML += '</tr>';
-        
-        tbody.innerHTML += rowHTML;
-        
-        if (absentCount > 0 && p.status !== 'rest') {
-            absentStats[id] = { name: p.name, count: absentCount };
-        }
+        body += '</tr>';
     });
-    
-    // 월별 결석자 통계 렌더링
-    renderMonthlyAbsent(absentStats);
+    document.getElementById('attendanceBody').innerHTML = body;
 }
 
-// 월별 결석자 통계 렌더링
-function renderMonthlyAbsent(absentStats) {
-    const list = document.getElementById('monthlyAbsentList');
-    list.innerHTML = '';
-    
-    const sorted = Object.entries(absentStats)
-        .sort((a, b) => b[1].count - a[1].count);
-    
-    if (sorted.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">결석자가 없습니다! 🎉</p>';
-        return;
+// 수동 수정
+async function processManual(isPresent) {
+    const date = document.getElementById('manualDate').value;
+    const id = document.getElementById('manualUser').value;
+    if(!date || !id) return alert("날짜와 회원을 선택하세요.");
+
+    if(isPresent) {
+        await db.ref(`checkins/${date}/${id}`).set({ name: participants[id].name, timestamp: Date.now() });
+    } else {
+        await db.ref(`checkins/${date}/${id}`).remove();
     }
-    
-    sorted.forEach(([id, data]) => {
-        const div = document.createElement('div');
-        div.className = 'absent-item';
-        div.innerHTML = `
-            <div class="absent-info">
-                <div class="absent-num">${id}</div>
-                <div class="absent-name">${data.name}</div>
-            </div>
-            <div class="absent-count">${data.count}회 결석</div>
-        `;
-        list.appendChild(div);
-    });
-}
-
-// 셀렉트 박스 렌더링
-function renderSelect() {
-    const sel = document.getElementById("pSelect");
-    sel.innerHTML = '<option value="">-- 참가자를 선택하세요 --</option>';
-    
-    Object.keys(participants).sort((a, b) => Number(a) - Number(b)).forEach(id => {
-        const p = participants[id];
-        const statusText = p.status === 'rest' ? ' (휴식중)' : '';
-        sel.innerHTML += `<option value="${id}">${id}. ${p.name}${statusText}</option>`;
-    });
-}
-
-// 참가자 목록 렌더링
-function renderParticipantList() {
-    const list = document.getElementById("participantList");
-    list.innerHTML = '';
-    
-    Object.keys(participants).sort((a, b) => Number(a) - Number(b)).forEach(id => {
-        const p = participants[id];
-        const statusClass = p.status === 'rest' ? 'rest' : 'normal';
-        const statusText = p.status === 'rest' ? '휴식' : '활동';
-        
-        list.innerHTML += `
-            <div class="participant-item">
-                <div class="participant-info">
-                    <div class="participant-num">${id}</div>
-                    <div class="participant-name">${p.name}</div>
-                </div>
-                <div class="status-badge ${statusClass}">${statusText}</div>
-            </div>
-        `;
-    });
+    const msg = document.getElementById('manualMsg');
+    msg.innerText = "반영되었습니다.";
+    msg.classList.add('success');
+    setTimeout(()=>msg.style.display='none', 2000);
 }
 
 // 상태 변경
-function updateStatus() {
-    const id = document.getElementById("pSelect").value;
-    const status = document.getElementById("statusSelect").value;
-    const msgEl = document.getElementById("statusMsg");
-    
-    if (!id) {
-        msgEl.className = 'alert';
-        msgEl.style.display = 'block';
-        msgEl.style.background = '#ffebee';
-        msgEl.style.color = '#c62828';
-        msgEl.style.border = '1px solid #ef9a9a';
-        msgEl.textContent = '참가자를 선택해주세요.';
-        return;
-    }
-    
-    const name = participants[id].name;
-    const statusText = status === 'rest' ? '휴식' : '정상';
-    
-    if (db) {
-        db.ref("participants/" + id).update({ status });
-    } else {
-        participants[id].status = status;
-        renderAll();
-    }
-    
-    msgEl.className = 'alert success';
-    msgEl.innerHTML = `<strong>${id}. ${name}</strong>님의 상태가 <strong>'${statusText}'</strong>으로 변경되었습니다.`;
-    
-    setTimeout(() => {
-        msgEl.style.display = 'none';
-    }, 3000);
+async function updateMemberStatus() {
+    const id = document.getElementById('statusUserSelect').value;
+    const val = document.getElementById('statusValueSelect').value;
+    if(!id) return alert("회원을 선택하세요.");
+    await db.ref(`participants/${id}/status`).set(val);
+    alert("상태가 변경되었습니다.");
 }
 
-// 초기화
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('monthDisplay').textContent = `${currentYear}년 ${currentMonth}월`;
-    setTimeout(initFirebase, 500);
-});
-</script>
+// 리포트 생성
+function generateMonthlyReport() {
+    const price = document.getElementById('penaltyPrice').value;
+    const days = new Date(currentYear, currentMonth, 0).getDate();
+    let total = 0;
+    let html = `<h3 style="margin-bottom:15px; text-align:center;">${currentMonth}월 정산 리포트</h3>`;
+    let textBody = '';
 
+    Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([id, p]) => {
+        if(p.status === 'rest') return;
+        let absent = 0;
+        for(let i=1; i<=days; i++) {
+            const dKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            if(!(allCheckins[dKey] && allCheckins[dKey][id])) absent++;
+        }
+        const penalty = absent * price;
+        total += penalty;
+        html += `<div class="ranking-item"><span>${p.name} (결석 ${absent}회)</span><b>${penalty.toLocaleString()}원</b></div>`;
+    });
+    
+    html += `<div style="margin-top:15px; text-align:right; font-weight:bold; color:#e53935;">총 징수액: ${total.toLocaleString()}원</div>`;
+    document.getElementById('reportContent').innerHTML = html;
+    document.getElementById('reportArea').style.display = 'block';
+}
+
+function copyToClipboard() {
+    const content = document.getElementById('reportContent').innerText;
+    navigator.clipboard.writeText(content).then(() => alert("복사되었습니다!"));
+}
+
+function changeMonth(n) {
+    currentMonth += n;
+    if(currentMonth > 12) { currentMonth=1; currentYear++; }
+    if(currentMonth < 1) { currentMonth=12; currentYear--; }
+    render();
+}
+
+window.onload = init;
+</script>
 </body>
 </html>
