@@ -1,47 +1,288 @@
-// 🏆 대시보드 누적 출석 랭킹 렌더링 (정확한 날짜 포맷팅 버전)
-function renderRanking() {
-    const rankListEl = document.getElementById('rankList');
-    if(!rankListEl) return;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRT Challenge Admin - Final</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+    /* UI/UX 스타일 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
+    .container { max-width: 900px; margin: 0 auto; }
+    
+    #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+    .login-card { background: white; padding: 40px; border-radius: 20px; text-align: center; width: 90%; max-width: 400px; }
+    
+    .header { text-align: center; color: white; margin-bottom: 20px; }
+    .tab-nav { display: flex; gap: 5px; margin-bottom: 20px; background: rgba(255,255,255,0.2); padding: 5px; border-radius: 12px; }
+    .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: white; font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.3s; }
+    .tab-btn.active { background: white; color: #667eea; }
+    
+    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .card-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    
+    .attendance-table-wrapper { overflow-x: auto; border-radius: 10px; border: 1px solid #eee; }
+    .attendance-table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
+    .attendance-table th, .attendance-table td { padding: 8px 4px; border: 1px solid #eee; text-align: center; }
+    .attendance-table th { background: #f8f9fa; }
+    
+    .sun-col { color: #e53935; background: #fff5f5 !important; font-weight: bold; }
+    .future-col { background: #fafafa; color: #ccc; }
+    .btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+    .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 14px; }
+    
+    .ranking-item { display: flex; justify-content: space-between; padding: 12px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; border-left: 5px solid #667eea; }
+    .month-selector { display: flex; align-items: center; gap: 15px; justify-content: center; margin-bottom: 20px; background: white; padding: 10px; border-radius: 50px; }
+</style>
+</head>
+<body>
 
-    // 현재 월의 마지막 날 계산
-    const lastDay = new Date(currentYear, currentMonth, 0).getDate();
+<div id="login-overlay">
+    <div class="login-card">
+        <h2>Admin 인증</h2>
+        <div class="form-group" style="margin-top:20px;">
+            <input type="password" id="adminPw" placeholder="비밀번호 4자리" onkeypress="if(event.keyCode==13) checkLogin()">
+        </div>
+        <button class="btn-primary" onclick="checkLogin()">접속하기</button>
+        <p id="loginError" style="color:red; font-size:12px; margin-top:10px; display:none;">비밀번호가 올바르지 않습니다.</p>
+    </div>
+</div>
+
+<div class="container" id="admin-main" style="display: none;">
+    <div class="header">
+        <h1>⚙️ SRT Challenge 통합 관리자</h1>
+        <p id="currentViewLabel">데이터를 불러오는 중...</p>
+    </div>
+
+    <div class="month-selector">
+        <button onclick="changeMonth(-1)" style="border:none; background:none; cursor:pointer; font-size:20px;">◀</button>
+        <span id="targetMonthDisplay" style="font-weight:700; font-size:18px;">2025년 12월</span>
+        <button onclick="changeMonth(1)" style="border:none; background:none; cursor:pointer; font-size:20px;">▶</button>
+    </div>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="changeTab('dashboard')">📊 순위</button>
+        <button class="tab-btn" onclick="changeTab('attendance')">📅 출석부</button>
+        <button class="tab-btn" onclick="changeTab('edit')">✏️ 수정</button>
+        <button class="tab-btn" onclick="changeTab('report')">💰 정산</button>
+    </div>
+
+    <div id="tab-dashboard" class="tab-content active">
+        <div class="card">
+            <div class="card-title">🏆 선택 월 누적 성공 순위</div>
+            <div id="rankList"></div>
+        </div>
+    </div>
+
+    <div id="tab-attendance" class="tab-content">
+        <div class="card">
+            <div class="attendance-table-wrapper">
+                <table class="attendance-table">
+                    <thead id="atHead"></thead>
+                    <tbody id="atBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-edit" class="tab-content">
+        <div class="card">
+            <div class="card-title">✏️ 특정 날짜 인증 강제 수정</div>
+            <div class="form-group"><label>날짜</label><input type="date" id="inputDate"></div>
+            <div class="form-group"><label>회원</label><select id="inputUser"></select></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-primary" style="background:#43a047;" onclick="doManual(true)">출석 처리</button>
+                <button class="btn-primary" style="background:#e53935;" onclick="doManual(false)">기록 삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-report" class="tab-content">
+        <div class="card">
+            <div class="card-title">💸 마감 정산 리포트</div>
+            <div class="form-group"><label>인증 시작일 (이 날짜부터 계산)</label><input type="date" id="startDateInput"></div>
+            <div class="form-group"><label>미인증 벌금 (원)</label><input type="number" id="feeInput" value="5000"></div>
+            <button class="btn-primary" onclick="makeReport()">선택 월 리포트 생성</button>
+        </div>
+        <div id="reportBox" class="card" style="display:none;">
+            <div id="reportText" style="white-space:pre-wrap; line-height:1.6;"></div>
+            <button class="btn-primary" style="background:#333; margin-top:15px;" onclick="copyReport()">내용 복사하기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let participants = {};
+let allCheckins = {};
+let firebaseDb;
+
+// 조회 기준 날짜 (기본값: 오늘)
+let viewDate = new Date();
+const todayDate = new Date();
+todayDate.setHours(0,0,0,0);
+
+function checkLogin() {
+    if(document.getElementById('adminPw').value === "1230") {
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('admin-main').style.display = 'block';
+        init();
+    } else {
+        document.getElementById('loginError').style.display = 'block';
+    }
+}
+
+function init() {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    firebaseDb = firebase.database();
+    
+    // 데이터 실시간 감시
+    firebaseDb.ref("participants").on("value", snap => {
+        participants = snap.val() || {};
+        updateDropdown();
+        refresh();
+    });
+    firebaseDb.ref("checkins").on("value", snap => {
+        allCheckins = snap.val() || {};
+        refresh();
+    });
+}
+
+function changeMonth(val) {
+    viewDate.setMonth(viewDate.getMonth() + val);
+    refresh();
+}
+
+function refresh() {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth() + 1;
+    document.getElementById('targetMonthDisplay').innerText = `${year}년 ${month}월`;
+    document.getElementById('currentViewLabel').innerText = `${year}년 ${month}월 관리 모드`;
+    
+    // 1일로 시작일 기본 세팅
+    document.getElementById('startDateInput').value = `${year}-${String(month).padStart(2,'0')}-01`;
+    
+    renderRanking(year, month);
+    renderAttendance(year, month);
+}
+
+function renderRanking(year, month) {
+    const lastDay = new Date(year, month, 0).getDate();
     let scores = [];
 
-    // 참가자별 이번 달 출석 횟수 계산
     Object.entries(participants).forEach(([uid, p]) => {
         let count = 0;
-        // 1일부터 오늘(또는 말일)까지 반복하며 실제 체크인 데이터 확인
-        for(let i = 1; i <= lastDay; i++) {
-            // Firebase 저장 방식인 YYYY-MM-DD 형식으로 정확히 매칭
-            const yearStr = currentYear;
-            const monthStr = String(currentMonth).padStart(2, '0');
-            const dayStr = String(i).padStart(2, '0');
-            const dKey = `${yearStr}-${monthStr}-${dayStr}`;
-            
-            // 해당 날짜에 해당 유저의 체크인 기록이 있는지 확인
-            if(allCheckins[dKey] && allCheckins[dKey][uid]) {
-                count++;
-            }
+        for(let i=1; i<=lastDay; i++) {
+            const dKey = `${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            if(allCheckins[dKey] && allCheckins[dKey][uid]) count++;
         }
-        scores.push({ name: p.name, count: count, uid: uid });
+        scores.push({ name: p.name, count, uid });
     });
 
-    // 1. 출석 횟수 내림차순 2. 이름 순으로 정렬
-    scores.sort((a, b) => {
-        if (b.count !== a.count) return b.count - a.count;
-        return a.name.localeCompare(b.name);
-    });
-
-    let html = "";
-    scores.forEach((s, idx) => {
-        // 순위별 강조 스타일 적용 가능
-        const rankColor = idx < 3 ? "#667eea" : "#555";
-        html += `
-            <div class="ranking-item" style="border-left: 4px solid ${rankColor}">
-                <span><b style="color:${rankColor}">${idx + 1}위</b> ${s.name} (${s.uid}번)</span>
-                <b>${s.count}회 성공</b>
-            </div>`;
-    });
-    
-    rankListEl.innerHTML = html || "출석 데이터가 없습니다.";
+    scores.sort((a,b) => b.count - a.count);
+    document.getElementById('rankList').innerHTML = scores.map((s, i) => `
+        <div class="ranking-item">
+            <span><b>${i+1}위</b> ${s.name} (${s.uid})</span>
+            <b>${s.count}회 성공</b>
+        </div>
+    `).join('');
 }
+
+function renderAttendance(year, month) {
+    const lastDay = new Date(year, month, 0).getDate();
+    let head = '<tr><th>이름</th>';
+    for(let i=1; i<=lastDay; i++) {
+        const d = new Date(year, month-1, i);
+        const isSun = d.getDay() === 0;
+        const isFuture = d > todayDate;
+        head += `<th class="${isSun?'sun-col':''} ${isFuture?'future-col':''}">${i}</th>`;
+    }
+    head += '</tr>';
+    document.getElementById('atHead').innerHTML = head;
+
+    let body = '';
+    Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([uid, p]) => {
+        body += `<tr><td>${p.name}</td>`;
+        for(let i=1; i<=lastDay; i++) {
+            const d = new Date(year, month-1, i);
+            const dKey = `${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            const ok = allCheckins[dKey] && allCheckins[dKey][uid];
+            
+            if(d.getDay() === 0) body += `<td class="sun-col">일</td>`;
+            else if(d > todayDate) body += `<td class="future-col">-</td>`;
+            else body += `<td>${p.status==='rest'?'휴':(ok?'O':'X')}</td>`;
+        }
+        body += '</tr>';
+    });
+    document.getElementById('atBody').innerHTML = body;
+}
+
+function makeReport() {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth() + 1;
+    const fee = document.getElementById('feeInput').value;
+    const startDate = new Date(document.getElementById('startDateInput').value);
+    startDate.setHours(0,0,0,0);
+    const lastDay = new Date(year, month, 0).getDate();
+    
+    let totalPenalty = 0;
+    let text = `[${year}년 ${month}월 챌린지 정산 결과]\n`;
+    text += `기준일: ${document.getElementById('startDateInput').value} ~ 오늘\n`;
+    text += `------------------------------\n`;
+
+    Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([uid, p]) => {
+        if(p.status === 'rest') return;
+        let absent = 0;
+        for(let i=1; i<=lastDay; i++) {
+            const d = new Date(year, month-1, i);
+            d.setHours(0,0,0,0);
+            if(d < startDate || d.getDay() === 0 || d > todayDate) continue;
+            
+            const dKey = `${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            if(!(allCheckins[dKey] && allCheckins[dKey][uid])) absent++;
+        }
+        const money = absent * fee;
+        totalPenalty += money;
+        if(money > 0) text += `${p.name}: 미인증 ${absent}회 → ${money.toLocaleString()}원\n`;
+    });
+
+    text += `------------------------------\n`;
+    text += `총 징수 금액: ${totalPenalty.toLocaleString()}원`;
+    
+    document.getElementById('reportText').innerText = text;
+    document.getElementById('reportBox').style.display = 'block';
+}
+
+// 탭 전환 및 기타 유틸
+function changeTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+}
+function updateDropdown() {
+    const sel = document.getElementById('inputUser');
+    sel.innerHTML = '<option value="">회원 선택</option>';
+    Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([uid, p]) => {
+        sel.innerHTML += `<option value="${uid}">${uid}. ${p.name}</option>`;
+    });
+}
+async function doManual(isPresent) {
+    const date = document.getElementById('inputDate').value;
+    const uid = document.getElementById('inputUser').value;
+    if(!date || !uid) return alert("날짜와 회원을 선택하세요.");
+    const path = `checkins/${date}/${uid}`;
+    isPresent ? await firebaseDb.ref(path).set({ name: participants[uid].name, timestamp: Date.now() }) : await firebaseDb.ref(path).remove();
+    alert("반영되었습니다.");
+}
+function copyReport() {
+    const t = document.getElementById('reportText').innerText;
+    navigator.clipboard.writeText(t).then(() => alert("복사되었습니다!"));
+}
+</script>
+</body>
+</html>
