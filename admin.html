@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SRT Challenge Admin - 최종 보안 버전</title>
+<title>SRT Challenge Admin - 최종 수정본</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="firebase-config.js"></script>
 <style>
-/* 기존 스타일 유지 및 로그인 화면 스타일 추가 */
+/* 기존 스타일 100% 동일 유지 */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
 .container { max-width: 800px; margin: 0 auto; }
@@ -31,27 +31,25 @@ body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135d
 .form-group { margin-bottom: 15px; text-align: left; }
 .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
 .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; }
-.ranking-item { display: flex; justify-content: space-between; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 5px; font-size: 14px; }
+.ranking-item { display: flex; justify-content: space-between; padding: 12px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; font-size: 14px; border-left: 4px solid #667eea; }
+.ranking-item b { color: #667eea; }
 </style>
 </head>
 <body>
 
 <div id="login-overlay">
     <div class="login-card">
-        <h2 style="margin-bottom: 20px; color: #333;">Admin 접속</h2>
-        <div class="form-group">
-            <label>비밀번호</label>
-            <input type="password" id="adminPw" placeholder="Password 입력" onkeypress="if(event.keyCode==13) checkLogin()">
-        </div>
+        <h2 style="margin-bottom: 20px;">Admin 접속</h2>
+        <div class="form-group"><label>비밀번호</label><input type="password" id="adminPw" onkeypress="if(event.keyCode==13) checkLogin()"></div>
         <button class="btn-primary" onclick="checkLogin()">접속하기</button>
-        <p id="loginError" style="color: #e53935; font-size: 12px; margin-top: 10px; display: none;">비밀번호가 틀렸습니다.</p>
+        <p id="loginError" style="color:red; font-size:12px; margin-top:10px; display:none;">비밀번호가 틀렸습니다.</p>
     </div>
 </div>
 
 <div class="container" id="admin-main" style="display: none;">
     <div class="header">
         <h1>⚙️ SRT Challenge 관리자</h1>
-        <p>인증 데이터 및 정산 통합 시스템</p>
+        <p>실시간 데이터 기반 대시보드</p>
     </div>
 
     <div class="tab-nav">
@@ -62,7 +60,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135d
     </div>
 
     <div id="tab-dashboard" class="tab-content active">
-        <div class="card"><div class="card-title">🏆 이번 달 누적 출석</div><div id="rankList"></div></div>
+        <div class="card">
+            <div class="card-title">🏆 이번 달 누적 출석 (인증 성공 횟수)</div>
+            <div id="rankList">데이터를 불러오는 중...</div>
+        </div>
     </div>
 
     <div id="tab-attendance" class="tab-content">
@@ -96,28 +97,24 @@ body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135d
 </div>
 
 <script>
-// 보안 설정
-function checkLogin() {
-    const pw = document.getElementById('adminPw').value;
-    if(pw === "1230") {
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('admin-main').style.display = 'block';
-        init(); // 비밀번호가 맞을 때만 파이어베이스 데이터 초기화
-    } else {
-        const err = document.getElementById('loginError');
-        err.style.display = 'block';
-        document.getElementById('adminPw').value = "";
-    }
-}
-
 let participants = {};
 let allCheckins = {};
-let firebaseDb;
+let firebaseDb; // db 중복 선언 방지를 위해 하나만 사용
+
 const todayObj = new Date();
 todayObj.setHours(0,0,0,0);
-
 let currentYear = todayObj.getFullYear();
 let currentMonth = todayObj.getMonth() + 1;
+
+function checkLogin() {
+    if(document.getElementById('adminPw').value === "1230") {
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('admin-main').style.display = 'block';
+        init();
+    } else {
+        document.getElementById('loginError').style.display = 'block';
+    }
+}
 
 function changeTab(name) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -132,24 +129,67 @@ function init() {
     
     document.getElementById('startDateInput').value = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
 
+    // 1. 참가자 데이터 로드
     firebaseDb.ref("participants").on("value", snap => {
         participants = snap.val() || {};
-        const sel = document.getElementById('inputUser');
-        if(sel) {
-            sel.innerHTML = '<option value="">-- 회원 선택 --</option>';
-            Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([uid, p]) => {
-                sel.innerHTML += `<option value="${uid}">${uid}. ${p.name}</option>`;
-            });
-        }
+        updateUserSelect();
         refresh();
     });
+
+    // 2. 체크인 데이터 로드 (실시간 반영)
     firebaseDb.ref("checkins").on("value", snap => {
         allCheckins = snap.val() || {};
         refresh();
     });
 }
 
+function updateUserSelect() {
+    const sel = document.getElementById('inputUser');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">-- 회원 선택 --</option>';
+    Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([uid, p]) => {
+        sel.innerHTML += `<option value="${uid}">${uid}. ${p.name}</option>`;
+    });
+}
+
 function refresh() {
+    renderAttendance(); // 출석부 갱신
+    renderRanking();    // 🏆 대시보드 랭킹 갱신
+}
+
+// 🏆 대시보드 누적 출석 랭킹 렌더링 함수
+function renderRanking() {
+    const rankListEl = document.getElementById('rankList');
+    if(!rankListEl) return;
+
+    const lastDay = new Date(currentYear, currentMonth, 0).getDate();
+    let scores = [];
+
+    // 참가자별 이번 달 출석 횟수 계산
+    Object.entries(participants).forEach(([uid, p]) => {
+        let count = 0;
+        for(let i=1; i<=lastDay; i++) {
+            const dKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            if(allCheckins[dKey] && allCheckins[dKey][uid]) count++;
+        }
+        scores.push({ name: p.name, count: count, uid: uid });
+    });
+
+    // 출석 횟수 기준 내림차순 정렬
+    scores.sort((a, b) => b.count - a.count);
+
+    let html = "";
+    scores.forEach((s, idx) => {
+        html += `
+            <div class="ranking-item">
+                <span><b>${idx + 1}위</b> ${s.name} (${s.uid}번)</span>
+                <b>${s.count}회 성공</b>
+            </div>`;
+    });
+    rankListEl.innerHTML = html || "출석 데이터가 없습니다.";
+}
+
+function renderAttendance() {
     document.getElementById('monthLabel').innerText = `${currentYear}년 ${currentMonth}월 현황`;
     const lastDay = new Date(currentYear, currentMonth, 0).getDate();
     
@@ -208,9 +248,9 @@ function makeReport() {
         }
         const penalty = absentCount * fee;
         total += penalty;
-        if(penalty > 0) html += `<div class="ranking-item"><span>${p.name} (${absentCount}회)</span><b>${penalty.toLocaleString()}원</b></div>`;
+        if(penalty > 0) html += `<div class="ranking-item" style="border-left-color:red;"><span>${p.name} (${absentCount}회)</span><b>${penalty.toLocaleString()}원</b></div>`;
     });
-    html += `<br><div style="text-align:right; font-weight:bold; color:red;">총합: ${total.toLocaleString()}원</div>`;
+    html += `<br><div style="text-align:right; font-weight:bold; color:red; font-size:18px;">총합: ${total.toLocaleString()}원</div>`;
     document.getElementById('reportText').innerHTML = html;
     document.getElementById('reportBox').style.display = 'block';
 }
