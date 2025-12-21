@@ -3,51 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SRT Challenge Admin - Grouping Version</title>
+<title>SRT Challenge Admin - Final Enterprise</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="firebase-config.js"></script>
 <style>
-    /* 기본 스타일 */
+    /* 기본 디자인 시스템 */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
-    .container { max-width: 900px; margin: 0 auto; }
+    .container { max-width: 1000px; margin: 0 auto; }
     
-    /* 로그인 오버레이 */
     #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; }
-    .login-card { background: white; padding: 40px; border-radius: 20px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .login-card { background: white; padding: 40px; border-radius: 20px; text-align: center; width: 90%; max-width: 350px; }
     
     .header { text-align: center; color: white; margin-bottom: 20px; }
-    .month-selector { display: flex; align-items: center; gap: 15px; justify-content: center; margin-bottom: 20px; background: white; padding: 10px; border-radius: 50px; }
+    .month-selector { display: flex; align-items: center; gap: 15px; justify-content: center; margin-bottom: 20px; background: white; padding: 10px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     
-    /* 탭 메뉴 */
     .tab-nav { display: flex; gap: 5px; margin-bottom: 20px; background: rgba(255,255,255,0.2); padding: 5px; border-radius: 12px; }
-    .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: white; font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.3s; }
+    .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: white; font-weight: 600; cursor: pointer; border-radius: 8px; }
     .tab-btn.active { background: white; color: #667eea; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
     .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .card-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
     
-    /* ⭐ 그룹화 스타일 */
-    .group-container { margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
-    .group-header { background: #f1f3f9; padding: 10px 15px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
-    .group-header h3 { font-size: 15px; color: #444; }
-    .group-header .count-badge { background: #667eea; color: white; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
-    .group-body { padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; background: white; }
-    .member-tag { padding: 6px 12px; background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; font-size: 13px; color: #555; }
-    .top-group { border: 2px solid #667eea; }
-    .top-group .group-header { background: #667eea; color: white; }
-    .top-group .group-header h3 { color: white; }
-
-    /* 출석부 테이블 */
-    .at-wrapper { overflow-x: auto; }
-    .at-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; }
+    /* 엑셀 스타일 출석부 */
+    .at-wrapper { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; }
+    .at-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; background: white; }
     .at-table th, .at-table td { padding: 8px 4px; border: 1px solid #eee; }
+    .at-table th { background: #f8f9fa; font-weight: bold; }
     .sun-col { background: #fff5f5 !important; color: #e53935; font-weight: bold; }
     .future-col { background: #fafafa; color: #ccc; }
 
+    /* 버튼 스타일 */
     .btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    .btn-excel { background: #217346; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .btn-excel:hover { background: #1a5c38; }
+
+    /* 그룹화 스타일 */
+    .group-container { margin-bottom: 15px; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
+    .group-header { background: #f1f3f9; padding: 10px 15px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; }
+    .group-body { padding: 12px; display: flex; flex-wrap: wrap; gap: 8px; background: white; }
+    .member-tag { padding: 5px 10px; background: #f0f2f5; border-radius: 6px; font-size: 13px; }
+
     .form-group { margin-bottom: 15px; }
     .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; }
     .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
@@ -57,15 +56,15 @@
 
 <div id="login-overlay">
     <div class="login-card">
-        <h2 style="margin-bottom:20px;">Admin Access</h2>
-        <div class="form-group"><input type="password" id="adminPw" placeholder="비밀번호" onkeypress="if(event.keyCode==13) checkLogin()"></div>
-        <button class="btn-primary" onclick="checkLogin()">접속하기</button>
-        <p id="loginError" style="color:red; font-size:12px; margin-top:10px; display:none;">비밀번호가 틀렸습니다.</p>
+        <h2>Admin Login</h2>
+        <div class="form-group" style="margin-top:20px;"><input type="password" id="adminPw" placeholder="Password" onkeypress="if(event.keyCode==13) checkLogin()"></div>
+        <button class="btn-primary" onclick="checkLogin()">접속</button>
+        <p id="loginError" style="color:red; font-size:12px; margin-top:10px; display:none;">비밀번호 오류</p>
     </div>
 </div>
 
 <div class="container" id="admin-main" style="display: none;">
-    <div class="header"><h1>⚙️ SRT Challenge 관리자</h1></div>
+    <div class="header"><h1>⚙️ SRT Challenge 관리 시스템</h1></div>
 
     <div class="month-selector">
         <button onclick="changeMonth(-1)" style="border:none; background:none; cursor:pointer; font-size:20px;">◀</button>
@@ -81,26 +80,35 @@
 
     <div id="tab-rank" class="tab-content active">
         <div class="card">
-            <div class="card-title">👥 성공 횟수별 그룹 (공동 순위)</div>
+            <div class="card-title">👥 이번 달 성공 횟수별 그룹</div>
             <div id="groupList">데이터 분석 중...</div>
         </div>
     </div>
 
     <div id="tab-attendance" class="tab-content">
         <div class="card">
-            <div class="at-wrapper"><table class="at-table"><thead id="atHead"></thead><tbody id="atBody"></tbody></table></div>
+            <div class="card-title">
+                📅 상세 출석 현황
+                <button class="btn-excel" onclick="downloadExcel()">📊 엑셀 다운로드</button>
+            </div>
+            <div class="at-wrapper">
+                <table class="at-table" id="attendanceTable">
+                    <thead id="atHead"></thead>
+                    <tbody id="atBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <div id="tab-report" class="tab-content">
         <div class="card">
-            <div class="card-title">💰 벌금 리포트 생성</div>
+            <div class="card-title">💰 벌금 리포트</div>
             <div class="form-group"><label>인증 시작일</label><input type="date" id="startDateInput"></div>
             <div class="form-group"><label>결석 1회당 벌금</label><input type="number" id="feeInput" value="5000"></div>
-            <button class="btn-primary" onclick="makeReport()">리포트 생성</button>
+            <button class="btn-primary" onclick="makeReport()">결과 생성</button>
         </div>
         <div id="reportBox" class="card" style="display:none;">
-            <div id="reportText" style="white-space:pre-wrap; font-size:14px; line-height:1.6;"></div>
+            <div id="reportText" style="white-space:pre-wrap; font-size:14px;"></div>
             <button class="btn-primary" style="background:#333; margin-top:15px;" onclick="copyReport()">복사하기</button>
         </div>
     </div>
@@ -136,16 +144,13 @@ function refresh() {
     const m = viewDate.getMonth() + 1;
     document.getElementById('monthDisplay').innerText = `${y}년 ${m}월`;
     document.getElementById('startDateInput').value = `${y}-${String(m).padStart(2,'0')}-01`;
-    
     renderGroupRank(y, m);
     renderAttendance(y, m);
 }
 
-// 🏆 핵심: 성공 횟수별 그룹화 로직
 function renderGroupRank(year, month) {
     const lastDay = new Date(year, month, 0).getDate();
-    let grouped = {}; // { "12": [{name, uid}, ...], "11": [...] }
-
+    let grouped = {};
     Object.entries(participants).forEach(([uid, p]) => {
         let count = 0;
         for(let i=1; i<=lastDay; i++) {
@@ -155,26 +160,16 @@ function renderGroupRank(year, month) {
         if(!grouped[count]) grouped[count] = [];
         grouped[count].push({ name: p.name, uid });
     });
-
-    // 횟수 높은 순으로 정렬
     const sortedCounts = Object.keys(grouped).map(Number).sort((a,b) => b-a);
-    
     let html = "";
-    sortedCounts.forEach((count, idx) => {
-        const isTop = idx === 0;
+    sortedCounts.forEach(count => {
         html += `
-            <div class="group-container ${isTop ? 'top-group' : ''}">
-                <div class="group-header">
-                    <h3>${isTop ? '🥇 ' : ''}${count}회 성공 그룹</h3>
-                    <span class="count-badge">${grouped[count].length}명</span>
-                </div>
-                <div class="group-body">
-                    ${grouped[count].map(m => `<div class="member-tag">${m.name} (${m.uid})</div>`).join('')}
-                </div>
-            </div>
-        `;
+            <div class="group-container">
+                <div class="group-header"><b>${count}회 성공</b> <span>${grouped[count].length}명</span></div>
+                <div class="group-body">${grouped[count].map(m => `<div class="member-tag">${m.name} (${m.uid})</div>`).join('')}</div>
+            </div>`;
     });
-    document.getElementById('groupList').innerHTML = html || "데이터가 없습니다.";
+    document.getElementById('groupList').innerHTML = html || "데이터 없음";
 }
 
 function renderAttendance(year, month) {
@@ -202,16 +197,36 @@ function renderAttendance(year, month) {
     document.getElementById('atBody').innerHTML = body;
 }
 
+// 📊 엑셀 다운로드 핵심 함수
+function downloadExcel() {
+    const table = document.getElementById("attendanceTable");
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth() + 1;
+    const fileName = `SRT_출석부_${year}년${month}월.xls`;
+
+    // 한글 깨짐 방지를 위한 메타 태그 포함
+    const html = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head><meta charset="utf-8"></head>
+        <body><table>${table.innerHTML}</table></body>
+        </html>
+    `;
+
+    const blob = new Blob([html], { type: "application/vnd.ms-excel" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
 function makeReport() {
     const y = viewDate.getFullYear(); const m = viewDate.getMonth()+1;
     const fee = document.getElementById('feeInput').value;
     const start = new Date(document.getElementById('startDateInput').value); start.setHours(0,0,0,0);
     const lastDay = new Date(y, m, 0).getDate();
-    
-    let total = 0;
-    let res = `[${y}년 ${m}월 챌린지 정산]\n`;
-    res += `기준: ${document.getElementById('startDateInput').value} ~ 오늘\n\n`;
-
+    let total = 0; let res = `[${y}년 ${m}월 정산]\n\n`;
     Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([uid, p]) => {
         if(p.status === 'rest') return;
         let abs = 0;
@@ -221,12 +236,9 @@ function makeReport() {
             const dKey = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
             if(!(allCheckins[dKey] && allCheckins[dKey][uid])) abs++;
         }
-        if(abs > 0) {
-            const money = abs * fee; total += money;
-            res += `• ${p.name}: 미인증 ${abs}회 → ${money.toLocaleString()}원\n`;
-        }
+        if(abs > 0) { const money = abs * fee; total += money; res += `• ${p.name}: ${money.toLocaleString()}원\n`; }
     });
-    res += `\n총 징수액: ${total.toLocaleString()}원`;
+    res += `\n총액: ${total.toLocaleString()}원`;
     document.getElementById('reportText').innerText = res;
     document.getElementById('reportBox').style.display = 'block';
 }
@@ -237,9 +249,7 @@ function changeTab(n) {
     event.target.classList.add('active');
     document.getElementById('tab-' + n).classList.add('active');
 }
-function copyReport() {
-    navigator.clipboard.writeText(document.getElementById('reportText').innerText).then(()=>alert("복사완료!"));
-}
+function copyReport() { navigator.clipboard.writeText(document.getElementById('reportText').innerText).then(()=>alert("복사됨")); }
 </script>
 </body>
 </html>
