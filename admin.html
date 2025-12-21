@@ -1,264 +1,47 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SRT Challenge Admin - 최종 수정본</title>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="firebase-config.js"></script>
-<style>
-/* 기존 스타일 100% 동일 유지 */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-.container { max-width: 800px; margin: 0 auto; }
-#login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.login-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; width: 90%; max-width: 350px; }
-.header { text-align: center; color: white; margin-bottom: 25px; }
-.tab-nav { display: flex; gap: 5px; margin-bottom: 20px; background: rgba(255,255,255,0.2); padding: 5px; border-radius: 12px; }
-.tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: white; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px; }
-.tab-btn.active { background: white; color: #667eea; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-.card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
-.card-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-.attendance-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-.attendance-table th, .attendance-table td { padding: 6px 2px; border: 1px solid #e0e0e0; text-align: center; }
-.attendance-table th { background: #f5f5f5; }
-.sun-col { color: #e53935; background: #fff5f5 !important; font-weight: bold; }
-.future-col { background: #fafafa; color: #ccc; }
-.btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-.form-group { margin-bottom: 15px; text-align: left; }
-.form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
-.form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; }
-.ranking-item { display: flex; justify-content: space-between; padding: 12px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; font-size: 14px; border-left: 4px solid #667eea; }
-.ranking-item b { color: #667eea; }
-</style>
-</head>
-<body>
-
-<div id="login-overlay">
-    <div class="login-card">
-        <h2 style="margin-bottom: 20px;">Admin 접속</h2>
-        <div class="form-group"><label>비밀번호</label><input type="password" id="adminPw" onkeypress="if(event.keyCode==13) checkLogin()"></div>
-        <button class="btn-primary" onclick="checkLogin()">접속하기</button>
-        <p id="loginError" style="color:red; font-size:12px; margin-top:10px; display:none;">비밀번호가 틀렸습니다.</p>
-    </div>
-</div>
-
-<div class="container" id="admin-main" style="display: none;">
-    <div class="header">
-        <h1>⚙️ SRT Challenge 관리자</h1>
-        <p>실시간 데이터 기반 대시보드</p>
-    </div>
-
-    <div class="tab-nav">
-        <button class="tab-btn active" onclick="changeTab('dashboard')">📊 대시보드</button>
-        <button class="tab-btn" onclick="changeTab('attendance')">📅 출석부</button>
-        <button class="tab-btn" onclick="changeTab('edit')">✏️ 기록수정</button>
-        <button class="tab-btn" onclick="changeTab('report')">💰 정산관리</button>
-    </div>
-
-    <div id="tab-dashboard" class="tab-content active">
-        <div class="card">
-            <div class="card-title">🏆 이번 달 누적 출석 (인증 성공 횟수)</div>
-            <div id="rankList">데이터를 불러오는 중...</div>
-        </div>
-    </div>
-
-    <div id="tab-attendance" class="tab-content">
-        <div class="card" style="overflow-x: auto;">
-            <div id="monthLabel" style="text-align:center; font-weight:bold; margin-bottom:10px;"></div>
-            <table class="attendance-table"><thead id="atHead"></thead><tbody id="atBody"></tbody></table>
-        </div>
-    </div>
-
-    <div id="tab-edit" class="tab-content">
-        <div class="card">
-            <div class="card-title">✏️ 인증 수동 관리</div>
-            <div class="form-group"><label>날짜 선택</label><input type="date" id="inputDate"></div>
-            <div class="form-group"><label>회원 선택</label><select id="inputUser"></select></div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn-primary" style="background:#43a047;" onclick="doManual(true)">인증 처리</button>
-                <button class="btn-primary" style="background:#e53935;" onclick="doManual(false)">인증 삭제</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="tab-report" class="tab-content">
-        <div class="card">
-            <div class="card-title">💸 정산 리포트 생성</div>
-            <div class="form-group"><label>챌린지 시작일</label><input type="date" id="startDateInput"></div>
-            <div class="form-group"><label>미출석 벌금(원)</label><input type="number" id="feeInput" value="5000"></div>
-            <button class="btn-primary" onclick="makeReport()">맞춤 리포트 생성</button>
-        </div>
-        <div id="reportBox" class="card" style="display:none;"><div id="reportText"></div><button class="btn-primary" style="background:#333;" onclick="copyReport()">리포트 복사</button></div>
-    </div>
-</div>
-
-<script>
-let participants = {};
-let allCheckins = {};
-let firebaseDb; // db 중복 선언 방지를 위해 하나만 사용
-
-const todayObj = new Date();
-todayObj.setHours(0,0,0,0);
-let currentYear = todayObj.getFullYear();
-let currentMonth = todayObj.getMonth() + 1;
-
-function checkLogin() {
-    if(document.getElementById('adminPw').value === "1230") {
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('admin-main').style.display = 'block';
-        init();
-    } else {
-        document.getElementById('loginError').style.display = 'block';
-    }
-}
-
-function changeTab(name) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    document.getElementById('tab-' + name).classList.add('active');
-}
-
-function init() {
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    firebaseDb = firebase.database();
-    
-    document.getElementById('startDateInput').value = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
-
-    // 1. 참가자 데이터 로드
-    firebaseDb.ref("participants").on("value", snap => {
-        participants = snap.val() || {};
-        updateUserSelect();
-        refresh();
-    });
-
-    // 2. 체크인 데이터 로드 (실시간 반영)
-    firebaseDb.ref("checkins").on("value", snap => {
-        allCheckins = snap.val() || {};
-        refresh();
-    });
-}
-
-function updateUserSelect() {
-    const sel = document.getElementById('inputUser');
-    if(!sel) return;
-    sel.innerHTML = '<option value="">-- 회원 선택 --</option>';
-    Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([uid, p]) => {
-        sel.innerHTML += `<option value="${uid}">${uid}. ${p.name}</option>`;
-    });
-}
-
-function refresh() {
-    renderAttendance(); // 출석부 갱신
-    renderRanking();    // 🏆 대시보드 랭킹 갱신
-}
-
-// 🏆 대시보드 누적 출석 랭킹 렌더링 함수
+// 🏆 대시보드 누적 출석 랭킹 렌더링 (정확한 날짜 포맷팅 버전)
 function renderRanking() {
     const rankListEl = document.getElementById('rankList');
     if(!rankListEl) return;
 
+    // 현재 월의 마지막 날 계산
     const lastDay = new Date(currentYear, currentMonth, 0).getDate();
     let scores = [];
 
     // 참가자별 이번 달 출석 횟수 계산
     Object.entries(participants).forEach(([uid, p]) => {
         let count = 0;
-        for(let i=1; i<=lastDay; i++) {
-            const dKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-            if(allCheckins[dKey] && allCheckins[dKey][uid]) count++;
+        // 1일부터 오늘(또는 말일)까지 반복하며 실제 체크인 데이터 확인
+        for(let i = 1; i <= lastDay; i++) {
+            // Firebase 저장 방식인 YYYY-MM-DD 형식으로 정확히 매칭
+            const yearStr = currentYear;
+            const monthStr = String(currentMonth).padStart(2, '0');
+            const dayStr = String(i).padStart(2, '0');
+            const dKey = `${yearStr}-${monthStr}-${dayStr}`;
+            
+            // 해당 날짜에 해당 유저의 체크인 기록이 있는지 확인
+            if(allCheckins[dKey] && allCheckins[dKey][uid]) {
+                count++;
+            }
         }
         scores.push({ name: p.name, count: count, uid: uid });
     });
 
-    // 출석 횟수 기준 내림차순 정렬
-    scores.sort((a, b) => b.count - a.count);
+    // 1. 출석 횟수 내림차순 2. 이름 순으로 정렬
+    scores.sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return a.name.localeCompare(b.name);
+    });
 
     let html = "";
     scores.forEach((s, idx) => {
+        // 순위별 강조 스타일 적용 가능
+        const rankColor = idx < 3 ? "#667eea" : "#555";
         html += `
-            <div class="ranking-item">
-                <span><b>${idx + 1}위</b> ${s.name} (${s.uid}번)</span>
+            <div class="ranking-item" style="border-left: 4px solid ${rankColor}">
+                <span><b style="color:${rankColor}">${idx + 1}위</b> ${s.name} (${s.uid}번)</span>
                 <b>${s.count}회 성공</b>
             </div>`;
     });
+    
     rankListEl.innerHTML = html || "출석 데이터가 없습니다.";
 }
-
-function renderAttendance() {
-    document.getElementById('monthLabel').innerText = `${currentYear}년 ${currentMonth}월 현황`;
-    const lastDay = new Date(currentYear, currentMonth, 0).getDate();
-    
-    let head = '<tr><th>이름</th>';
-    for(let i=1; i<=lastDay; i++) {
-        const dateObj = new Date(currentYear, currentMonth-1, i);
-        const cls = dateObj.getDay() === 0 ? 'class="sun-col"' : (dateObj > todayObj ? 'class="future-col"' : '');
-        head += `<th ${cls}>${i}</th>`;
-    }
-    head += '</tr>';
-    document.getElementById('atHead').innerHTML = head;
-
-    let body = '';
-    Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([uid, p]) => {
-        body += `<tr><td>${p.name}</td>`;
-        for(let i=1; i<=lastDay; i++) {
-            const dateObj = new Date(currentYear, currentMonth-1, i);
-            const dKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-            const ok = allCheckins[dKey] && allCheckins[dKey][uid];
-            if (dateObj.getDay() === 0) body += `<td class="sun-col">일</td>`;
-            else if (dateObj > todayObj) body += `<td class="future-col">-</td>`;
-            else body += `<td>${p.status==='rest'?'휴':(ok?'O':'X')}</td>`;
-        }
-        body += '</tr>';
-    });
-    document.getElementById('atBody').innerHTML = body;
-}
-
-async function doManual(isPresent) {
-    const date = document.getElementById('inputDate').value;
-    const uid = document.getElementById('inputUser').value;
-    if(!date || !uid) return alert("날짜와 회원을 선택하세요.");
-    const path = `checkins/${date}/${uid}`;
-    isPresent ? await firebaseDb.ref(path).set({ name: participants[uid].name, timestamp: Date.now() }) : await firebaseDb.ref(path).remove();
-    alert("반영되었습니다.");
-}
-
-function makeReport() {
-    const fee = document.getElementById('feeInput').value;
-    const startDateVal = document.getElementById('startDateInput').value;
-    const startDate = new Date(startDateVal);
-    startDate.setHours(0,0,0,0);
-
-    let total = 0;
-    let html = `<h3>[정산 리포트]</h3><p style="font-size:11px;">기준: ${startDateVal} ~ 오늘</p><br>`;
-
-    Object.entries(participants).sort((a,b)=>a[0]-b[0]).forEach(([uid, p]) => {
-        if(p.status === 'rest') return;
-        let absentCount = 0;
-        for(let i=1; i<=new Date(currentYear, currentMonth, 0).getDate(); i++) {
-            const checkDate = new Date(currentYear, currentMonth-1, i);
-            checkDate.setHours(0,0,0,0);
-            if(checkDate < startDate || checkDate.getDay() === 0 || checkDate > todayObj) continue;
-            const dStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-            if(!(allCheckins[dStr] && allCheckins[dStr][uid])) absentCount++;
-        }
-        const penalty = absentCount * fee;
-        total += penalty;
-        if(penalty > 0) html += `<div class="ranking-item" style="border-left-color:red;"><span>${p.name} (${absentCount}회)</span><b>${penalty.toLocaleString()}원</b></div>`;
-    });
-    html += `<br><div style="text-align:right; font-weight:bold; color:red; font-size:18px;">총합: ${total.toLocaleString()}원</div>`;
-    document.getElementById('reportText').innerHTML = html;
-    document.getElementById('reportBox').style.display = 'block';
-}
-
-function copyReport() {
-    const txt = document.getElementById('reportText').innerText;
-    navigator.clipboard.writeText(txt).then(() => alert("리포트가 복사되었습니다!"));
-}
-</script>
-</body>
-</html>
