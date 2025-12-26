@@ -32,9 +32,18 @@
     .at-wrapper { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; }
     .at-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; background: white; }
     .at-table th, .at-table td { padding: 8px 4px; border: 1px solid #eee; }
-    .at-table th { background: #f8f9fa; font-weight: bold; }
-    .sun-col { background: #fff5f5 !important; color: #e53935; font-weight: bold; }
-    .future-col { background: #fafafa; color: #ccc; }
+    
+    /* 날짜 헤더 스타일 (클릭 가능하도록 변경) */
+    .at-table th { background: #f8f9fa; font-weight: bold; cursor: pointer; user-select: none; transition: background 0.2s; position: relative; }
+    .at-table th:hover { background: #e0e0e0; }
+
+    /* 날짜 상태별 스타일 */
+    .sun-col { color: #e53935; } /* 기본 일요일 텍스트 색상 */
+    
+    /* 관리자가 지정한 상태 스타일 */
+    .force-holiday { background: #ffcdd2 !important; color: #b71c1c !important; } /* 강제 휴일 (붉은 배경) */
+    .force-workday { background: #bbdefb !important; color: #0d47a1 !important; } /* 강제 영업일 (푸른 배경) */
+    .future-col { background: #fafafa !important; color: #ccc !important; cursor: default !important; }
 
     /* 버튼 스타일 */
     .btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
@@ -56,12 +65,16 @@
     .manage-row:last-child { border-bottom: none; }
     .manage-info { display: flex; align-items: center; gap: 10px; }
     .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-    .status-active { background: #e8f5e9; color: #2e7d32; } /* 참여중/숙면 */
-    .status-rest { background: #f5f5f5; color: #757575; }   /* 휴면 */
+    .status-active { background: #e8f5e9; color: #2e7d32; }
+    .status-rest { background: #f5f5f5; color: #757575; }
     .btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; margin-left: 5px;}
     .btn-danger { background: #ffebee; color: #c62828; }
     .input-row { display: flex; gap: 10px; margin-bottom: 20px; }
     .input-row input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+
+    /* 범례 스타일 */
+    .legend-box { display: flex; gap: 15px; font-size: 11px; margin-bottom: 10px; color: #555; background: #f5f5f5; padding: 8px; border-radius: 8px;}
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
 </style>
 </head>
 <body>
@@ -104,6 +117,13 @@
                 📅 상세 출석 현황
                 <button class="btn-excel" onclick="downloadExcel()">📊 엑셀 다운로드</button>
             </div>
+            
+            <div class="legend-box">
+                <span><span class="dot" style="background:#ffcdd2;"></span>날짜 클릭 시 <b>휴일(벌금X)</b> 지정</span>
+                <span><span class="dot" style="background:#bbdefb;"></span>다시 클릭 시 <b>영업일(벌금O)</b> 지정</span>
+                <span><span class="dot" style="background:#ddd;"></span>다시 클릭 시 <b>초기화</b></span>
+            </div>
+
             <div class="at-wrapper">
                 <table class="at-table" id="attendanceTable">
                     <thead id="atHead"></thead>
@@ -116,6 +136,10 @@
     <div id="tab-report" class="tab-content">
         <div class="card">
             <div class="card-title">💰 벌금 리포트</div>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">
+                * 출석부에서 설정한 <b>휴일(붉은색)</b>은 벌금 카운트에서 제외됩니다.<br>
+                * <b>영업일(푸른색)</b>로 강제 지정한 날은 일요일이어도 카운트됩니다.
+            </p>
             <div class="form-group"><label>인증 시작일</label><input type="date" id="startDateInput"></div>
             <div class="form-group"><label>결석 1회당 벌금</label><input type="number" id="feeInput" value="5000"></div>
             <button class="btn-primary" onclick="makeReport()">결과 생성</button>
@@ -139,8 +163,7 @@
 
         <div class="card">
             <div class="card-title">📋 전체 회원 관리 (상태 변경)</div>
-            <div id="manageList">
-                </div>
+            <div id="manageList"></div>
         </div>
     </div>
 
@@ -149,6 +172,7 @@
 <script>
 let participants = {};
 let allCheckins = {};
+let daySettings = {}; // [NEW] 날짜별 휴일/영업일 설정 저장
 let firebaseDb;
 let viewDate = new Date();
 const today = new Date();
@@ -165,8 +189,12 @@ function checkLogin() {
 function init() {
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     firebaseDb = firebase.database();
+    
+    // 데이터 로드 리스너
     firebaseDb.ref("participants").on("value", s => { participants = s.val() || {}; refresh(); });
     firebaseDb.ref("checkins").on("value", s => { allCheckins = s.val() || {}; refresh(); });
+    // [NEW] 휴일 설정 로드
+    firebaseDb.ref("daySettings").on("value", s => { daySettings = s.val() || {}; refresh(); });
 }
 
 function changeMonth(v) { viewDate.setMonth(viewDate.getMonth() + v); refresh(); }
@@ -176,16 +204,101 @@ function refresh() {
     const m = viewDate.getMonth() + 1;
     document.getElementById('monthDisplay').innerText = `${y}년 ${m}월`;
     document.getElementById('startDateInput').value = `${y}-${String(m).padStart(2,'0')}-01`;
+    
     renderGroupRank(y, m);
     renderAttendance(y, m);
-    renderManageList(); // 회원 관리 목록 갱신
+    renderManageList();
+}
+
+// [NEW] 날짜 상태 판별 (휴일 여부 체크)
+// 반환값: 'holiday'(벌금X), 'workday'(벌금O), 'default'(일요일쉼, 평일함)
+function getDayType(dateStr) {
+    if(daySettings[dateStr] === 'holiday') return 'holiday';
+    if(daySettings[dateStr] === 'workday') return 'workday';
+    return 'default';
+}
+
+// [NEW] 날짜 클릭 시 상태 토글 (Default -> Holiday -> Workday -> Default)
+function toggleDayStatus(dateStr) {
+    const current = daySettings[dateStr];
+    let nextStatus = null;
+
+    if (!current) nextStatus = 'holiday';      // 없으면 -> 휴일로
+    else if (current === 'holiday') nextStatus = 'workday'; // 휴일이면 -> 영업일로
+    else nextStatus = null;                    // 영업일이면 -> 초기화(삭제)
+
+    if(nextStatus) {
+        firebaseDb.ref(`daySettings/${dateStr}`).set(nextStatus);
+    } else {
+        firebaseDb.ref(`daySettings/${dateStr}`).remove();
+    }
+}
+
+function renderAttendance(year, month) {
+    const lastDay = new Date(year, month, 0).getDate();
+    let head = '<tr><th>이름</th>';
+    
+    for(let i=1; i<=lastDay; i++) {
+        const d = new Date(year, month-1, i);
+        const dKey = `${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        
+        // [NEW] 상태에 따른 클래스 부여
+        const dayType = getDayType(dKey);
+        let classNames = [];
+        
+        if (d > today) classNames.push('future-col');
+        else if (dayType === 'holiday') classNames.push('force-holiday');
+        else if (dayType === 'workday') classNames.push('force-workday');
+        else if (d.getDay() === 0) classNames.push('sun-col');
+
+        // [NEW] 클릭 이벤트 추가 (미래 날짜는 클릭 불가)
+        const clickAction = (d <= today) ? `onclick="toggleDayStatus('${dKey}')"` : '';
+        
+        head += `<th class="${classNames.join(' ')}" ${clickAction} title="클릭하여 휴일/영업일 변경">${i}</th>`;
+    }
+    document.getElementById('atHead').innerHTML = head + '</tr>';
+
+    let body = '';
+    Object.entries(participants).sort((a,b)=> Number(a[0]) - Number(b[0])).forEach(([uid, p]) => {
+        body += `<tr><td>${p.name} <span style="font-size:9px; color:#999">(${uid})</span></td>`;
+        for(let i=1; i<=lastDay; i++) {
+            const d = new Date(year, month-1, i);
+            const dKey = `${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            
+            // [NEW] 휴일 여부 로직 적용
+            const dayType = getDayType(dKey);
+            const isSunday = d.getDay() === 0;
+            const isRestDay = (dayType === 'holiday') || (dayType === 'default' && isSunday);
+            
+            const ok = allCheckins[dKey] && allCheckins[dKey][uid];
+            
+            let cellContent = '';
+            
+            if(d > today) {
+                cellContent = '<span style="color:#eee;">-</span>';
+            } else if(p.status === 'rest') {
+                cellContent = '<span style="color:#ccc;">휴</span>';
+            } else {
+                if(ok) {
+                    cellContent = '<span style="color:blue; font-weight:bold;">O</span>';
+                } else {
+                    // 결석인데 휴일이면 표시 안함 (빈칸) 혹은 흐린 X
+                    if(isRestDay) cellContent = '<span style="color:#ddd; font-size:10px;">-</span>';
+                    else cellContent = '<span style="color:red; opacity:0.3;">X</span>';
+                }
+            }
+            body += `<td>${cellContent}</td>`;
+        }
+        body += '</tr>';
+    });
+    document.getElementById('atBody').innerHTML = body;
 }
 
 function renderGroupRank(year, month) {
     const lastDay = new Date(year, month, 0).getDate();
     let grouped = {};
     Object.entries(participants).forEach(([uid, p]) => {
-        if(p.status === 'rest') return; // 휴면 계정은 랭킹에서 제외하려면 이 줄 유지, 포함하려면 삭제
+        if(p.status === 'rest') return;
         let count = 0;
         for(let i=1; i<=lastDay; i++) {
             const dKey = `${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
@@ -206,43 +319,9 @@ function renderGroupRank(year, month) {
     document.getElementById('groupList').innerHTML = html || "데이터 없음";
 }
 
-function renderAttendance(year, month) {
-    const lastDay = new Date(year, month, 0).getDate();
-    let head = '<tr><th>이름</th>';
-    for(let i=1; i<=lastDay; i++) {
-        const d = new Date(year, month-1, i);
-        head += `<th class="${d.getDay()===0?'sun-col':''} ${d>today?'future-col':''}">${i}</th>`;
-    }
-    document.getElementById('atHead').innerHTML = head + '</tr>';
-
-    let body = '';
-    // ID 순서대로 정렬 (숫자 기준)
-    Object.entries(participants).sort((a,b)=> Number(a[0]) - Number(b[0])).forEach(([uid, p]) => {
-        body += `<tr><td>${p.name} <span style="font-size:9px; color:#999">(${uid})</span></td>`;
-        for(let i=1; i<=lastDay; i++) {
-            const d = new Date(year, month-1, i);
-            const dKey = `${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-            const ok = allCheckins[dKey] && allCheckins[dKey][uid];
-            
-            let cellContent = '';
-            if(p.status === 'rest') cellContent = '<span style="color:#ccc;">휴</span>';
-            else if(ok) cellContent = '<span style="color:blue; font-weight:bold;">O</span>';
-            else cellContent = '<span style="color:red; opacity:0.3;">X</span>';
-
-            if(d.getDay()===0) body += `<td class="sun-col">일</td>`;
-            else if(d > today) body += `<td class="future-col">-</td>`;
-            else body += `<td>${cellContent}</td>`;
-        }
-        body += '</tr>';
-    });
-    document.getElementById('atBody').innerHTML = body;
-}
-
-// [NEW] 회원 관리 리스트 렌더링
 function renderManageList() {
     const listDiv = document.getElementById('manageList');
     let html = '';
-    
     Object.entries(participants).sort((a,b)=> Number(a[0]) - Number(b[0])).forEach(([uid, p]) => {
         const isRest = p.status === 'rest';
         html += `
@@ -266,39 +345,83 @@ function renderManageList() {
     listDiv.innerHTML = html;
 }
 
-// [NEW] 회원 등록
 function registerUser() {
     const id = document.getElementById('newUserId').value;
     const name = document.getElementById('newUserName').value;
-    
     if(!id || !name) return alert("ID와 이름을 모두 입력해주세요.");
     if(participants[id]) return alert("이미 존재하는 ID입니다.");
-
-    firebaseDb.ref('participants/' + id).set({
-        name: name,
-        status: 'active', // 기본값: 참여중
-        joinedAt: new Date().toISOString()
-    }).then(() => {
+    firebaseDb.ref('participants/' + id).set({ name: name, status: 'active', joinedAt: new Date().toISOString() })
+    .then(() => {
         alert(`${name}님 등록 완료!`);
         document.getElementById('newUserId').value = '';
         document.getElementById('newUserName').value = '';
     });
 }
 
-// [NEW] 상태 변경 (참여 <-> 휴면)
 function toggleStatus(uid, currentStatus) {
     const newStatus = currentStatus === 'rest' ? 'active' : 'rest';
-    const msg = newStatus === 'active' ? '참여(숙면) 상태로 변경할까요?' : '휴면 상태로 변경할까요?';
-    if(confirm(msg)) {
+    if(confirm(newStatus === 'active' ? '참여 상태로 변경?' : '휴면 상태로 변경?')) {
         firebaseDb.ref('participants/' + uid).update({ status: newStatus });
     }
 }
 
-// [NEW] 회원 삭제
 function deleteUser(uid, name) {
-    if(confirm(`정말 [${name}] 님을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+    if(confirm(`정말 [${name}] 님을 삭제하시겠습니까?`)) {
         firebaseDb.ref('participants/' + uid).remove();
     }
+}
+
+function makeReport() {
+    const y = viewDate.getFullYear(); const m = viewDate.getMonth()+1;
+    const fee = document.getElementById('feeInput').value;
+    const start = new Date(document.getElementById('startDateInput').value); start.setHours(0,0,0,0);
+    const lastDay = new Date(y, m, 0).getDate();
+    let total = 0; let res = `[${y}년 ${m}월 정산]\n\n`;
+
+    Object.entries(participants).sort((a,b)=> Number(a[0]) - Number(b[0])).forEach(([uid, p]) => {
+        if(p.status === 'rest') return; // 휴면 회원은 계산 제외
+        let abs = 0;
+        for(let i=1; i<=lastDay; i++){
+            const d = new Date(y, m-1, i); d.setHours(0,0,0,0);
+            
+            // 1. 미래 날짜 제외
+            if(d > today) continue;
+            // 2. 시작일 이전 제외
+            if(d < start) continue;
+
+            const dKey = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            
+            // [NEW] 휴일 판독 로직
+            const dayType = getDayType(dKey);
+            const isSunday = d.getDay() === 0;
+
+            // 벌금 면제 조건: (강제 휴일임) OR (별도 설정 없고 일요일임)
+            if (dayType === 'holiday') continue; 
+            if (dayType === 'default' && isSunday) continue;
+
+            // 영업일(평일 or 강제영업일)인데 체크인이 없으면 결석
+            if(!(allCheckins[dKey] && allCheckins[dKey][uid])) abs++;
+        }
+        
+        if(abs > 0) { 
+            const money = abs * fee; total += money; 
+            res += `• ${p.name}: ${money.toLocaleString()}원 (${abs}회)\n`; 
+        }
+    });
+    res += `\n총액: ${total.toLocaleString()}원`;
+    document.getElementById('reportText').innerText = res;
+    document.getElementById('reportBox').style.display = 'block';
+}
+
+function copyReport() { navigator.clipboard.writeText(document.getElementById('reportText').innerText).then(()=>alert("복사됨")); }
+
+function changeTab(n) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    let target = event.target;
+    if(target.tagName !== 'BUTTON') target = target.closest('button');
+    target.classList.add('active');
+    document.getElementById('tab-' + n).classList.add('active');
 }
 
 function downloadExcel() {
@@ -320,39 +443,6 @@ function downloadExcel() {
     a.click();
     window.URL.revokeObjectURL(url);
 }
-
-function makeReport() {
-    const y = viewDate.getFullYear(); const m = viewDate.getMonth()+1;
-    const fee = document.getElementById('feeInput').value;
-    const start = new Date(document.getElementById('startDateInput').value); start.setHours(0,0,0,0);
-    const lastDay = new Date(y, m, 0).getDate();
-    let total = 0; let res = `[${y}년 ${m}월 정산]\n\n`;
-    Object.entries(participants).sort((a,b)=> Number(a[0]) - Number(b[0])).forEach(([uid, p]) => {
-        if(p.status === 'rest') return;
-        let abs = 0;
-        for(let i=1; i<=lastDay; i++){
-            const d = new Date(y, m-1, i); d.setHours(0,0,0,0);
-            if(d < start || d.getDay()===0 || d > today) continue;
-            const dKey = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-            if(!(allCheckins[dKey] && allCheckins[dKey][uid])) abs++;
-        }
-        if(abs > 0) { const money = abs * fee; total += money; res += `• ${p.name}: ${money.toLocaleString()}원 (${abs}회)\n`; }
-    });
-    res += `\n총액: ${total.toLocaleString()}원`;
-    document.getElementById('reportText').innerText = res;
-    document.getElementById('reportBox').style.display = 'block';
-}
-
-function changeTab(n) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    // 클릭된 버튼 찾기 (이벤트 타겟이 버튼이 아닐 경우 상위 탐색)
-    let target = event.target;
-    if(target.tagName !== 'BUTTON') target = target.closest('button');
-    target.classList.add('active');
-    document.getElementById('tab-' + n).classList.add('active');
-}
-function copyReport() { navigator.clipboard.writeText(document.getElementById('reportText').innerText).then(()=>alert("복사됨")); }
 </script>
 </body>
 </html>
