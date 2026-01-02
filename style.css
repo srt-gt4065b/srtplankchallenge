@@ -7,7 +7,7 @@ body { font-family: sans-serif; padding: 20px; }
            opacity:0.95;
           }
 .notice-box { background:#fff7d6; border-left:6px solid #ffb300; padding:15px; margin-bottom:20px; border-radius:10px; font-size:15px; line-height:1.5; color:#444;}
-.panel { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:30px;}
+.panel { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:15px;}
 .p-btn { padding:12px; border-radius:12px; background:#ececec; text-align:center; font-weight:600; border:2px solid transparent; font-size:14px; position:relative; min-height:50px; padding-top:25px;}
 .p-btn.on { background:#7B61FF; color:white; border-color:#583aec; }
 .p-btn .pid { position:absolute; left:6px; top:4px; font-size:15px; font-weight:800; color:#444;}
