@@ -1,11 +1,10 @@
 
 body { font-family: sans-serif; padding: 20px; }
 .logo-box { width:100%; text-align:center; margin-bottom:15px; }
-.logo-img { width:450px !important; 
-           max-width:100% !important; 
+.logo-img { width:250px !important; 
+           max-width:80% !important; 
            height:auto; 
            opacity:0.95;
-          border: 2px solid red;
           }
 .notice-box { background:#fff7d6; border-left:6px solid #ffb300; padding:15px; margin-bottom:20px; border-radius:10px; font-size:15px; line-height:1.5; color:#444;}
 .panel { display:grid; grid-template-columns:repeat(8,1fr); gap:8px; margin-bottom:30px;}
